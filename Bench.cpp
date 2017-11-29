@@ -15,7 +15,7 @@ typedef std::string Value;
 
 void executeProgram(std::string s)
 {
-    system((s + " > /dev/null").c_str());
+    system(s.c_str());
 }
 
 int main(int argc, char *argv[])

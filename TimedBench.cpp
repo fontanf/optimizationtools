@@ -68,7 +68,6 @@ int main(int argc, char *argv[])
 				+ " -i " + data_file
 				+ " -o " + output
 				+ " -t " + std::to_string(time_limit);
-		cmd += " > /dev/null";
 		std::thread worker(executeProgram, cmd);
 		worker.join();
 	}
