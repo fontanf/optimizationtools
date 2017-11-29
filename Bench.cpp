@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 	// Write CSV file
 	std::ofstream out;
 	out.open(output_file);
-	out << exec << std::endl;
+	out << "," << exec << std::endl;
 	// First Line
 	out << "Data";
 	for (Key key: keys)

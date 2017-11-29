@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	// Write CSV file
 	std::ofstream out;
 	out.open(output_file);
-	out << exec << std::endl;
+	out << "," << exec << std::endl;
 	// First Line
 	out << "Data," << std::flush;
 	for (time_t t: time_marks) {
