@@ -4,7 +4,9 @@ cc_binary(
         copts = ["-pthread"],
         linkopts = ["-lpthread"],
         deps = [
-                "@system_libs//:boost",
+                "@boost//:filesystem",
+                "@boost//:system",
+                "@boost//:program_options",
         ],
         visibility = ["//visibility:public"],
 )
@@ -15,7 +17,9 @@ cc_binary(
         copts = ["-pthread"],
         linkopts = ["-lpthread"],
         deps = [
-                "@system_libs//:boost",
+                "@boost//:filesystem",
+                "@boost//:system",
+                "@boost//:program_options",
         ],
         visibility = ["//visibility:public"],
 )
