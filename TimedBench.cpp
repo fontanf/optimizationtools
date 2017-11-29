@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
 	std::vector<time_t> time_marks = vm["time-marks"].as<std::vector<time_t>>();
 	time_t time_limit = time_marks.back();
 
+	// Run algorithm
 	for (std::string data_file: vm["input-data"].as<std::vector<std::string>>()) {
 		std::cout << data_file << "... " << std::endl;
 		std::string output = generateOutputFilename(exec, data_file, time_limit);
@@ -72,7 +73,7 @@ int main(int argc, char *argv[])
 		worker.join();
 	}
 
-	// Run algorithm
+	// Read output files
 	std::map<time_t, std::vector<Key>> header;
 	std::map<std::tuple<DataFilename, time_t, Key>, Value> res;
 	for (std::string data_file: vm["input-data"].as<std::vector<std::string>>()) {

@@ -18,6 +18,17 @@ void executeProgram(std::string s)
     system(s.c_str());
 }
 
+std::string generateOutputFilename(std::string exec, std::string data_file)
+{
+	std::hash<std::string> hash_fn;
+	std::string s;
+	s += std::to_string(hash_fn(exec + data_file));
+	s +=
+		"--" + boost::filesystem::path(exec).filename().string() +
+		"--" + boost::filesystem::path(data_file).filename().string() + ".ini";
+	return s;
+}
+
 int main(int argc, char *argv[])
 {
 	// Parse program options
@@ -50,36 +61,38 @@ int main(int argc, char *argv[])
 	std::vector<Key> keys;
 	std::map<std::tuple<DataFilename, Key>, Value> res;
 	for (std::string data_file: vm["input-data"].as<std::vector<std::string>>()) {
-		std::cout << data_file << "... " << std::flush;
-		char* output = std::tmpnam(nullptr);
+		std::cout << data_file << "... " << std::endl;
+		std::string output = generateOutputFilename(exec, data_file);
+		if (boost::filesystem::exists(output))
+			continue;
 		std::string cmd = exec
 				+ " -i " + data_file
 				+ " -o " + output;
-		if (time_limit != 0)
-			cmd += "-t " + std::to_string(time_limit);
 		time_t begin = time(NULL);
 		std::thread worker(executeProgram, cmd);
 		time_t end = time(NULL);
 		worker.join();
+		if (std::find(keys.begin(), keys.end(), "Time") == keys.end())
+			keys.push_back("Time");
+		res[std::make_tuple(data_file, "Time")] = std::to_string(end - begin);
+	}
 
-		if (boost::filesystem::exists(output)) {
-			if (std::find(keys.begin(), keys.end(), "Time") == keys.end())
-				keys.push_back("Time");
-			res[std::make_tuple(data_file, "Time")] = std::to_string(end - begin);
-			boost::property_tree::ptree pt;
-			boost::property_tree::ini_parser::read_ini(output, pt);
-			for (auto& sec: pt) {
-				for (auto& kv: sec.second) {
-					std::string key   = kv.first;
-					std::string value = kv.second.get_value<std::string>();
-					if (std::find(keys.begin(), keys.end(), key) == keys.end())
-						keys.push_back(key);
-					res[std::make_tuple(data_file, key)] = value;
-				}
+	// Read output files
+	for (std::string data_file: vm["input-data"].as<std::vector<std::string>>()) {
+		std::string output = generateOutputFilename(exec, data_file);
+		if (!boost::filesystem::exists(output))
+			continue;
+		boost::property_tree::ptree pt;
+		boost::property_tree::ini_parser::read_ini(output, pt);
+		for (auto& sec: pt) {
+			for (auto& kv: sec.second) {
+				std::string key   = kv.first;
+				std::string value = kv.second.get_value<std::string>();
+				if (std::find(keys.begin(), keys.end(), key) == keys.end())
+					keys.push_back(key);
+				res[std::make_tuple(data_file, key)] = value;
 			}
-			boost::filesystem::remove(output);
 		}
-		std::cout << std::endl;
 	}
 
 	// Write CSV file
