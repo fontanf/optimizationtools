@@ -7,6 +7,7 @@ cc_binary(
                 "@boost//:filesystem",
                 "@boost//:system",
                 "@boost//:program_options",
+                "@boost//:timer",
         ],
         visibility = ["//visibility:public"],
 )

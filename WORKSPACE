@@ -17,6 +17,11 @@ cc_library(
     srcs = ["libboost_program_options.so"],
     visibility = ["//visibility:public"],
 )
+cc_library(
+    name = "timer",
+    srcs = ["libboost_timer.so"],
+    visibility = ["//visibility:public"],
+)
 """,
 )
 

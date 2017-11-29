@@ -6,6 +6,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/program_options.hpp>
+#include <boost/timer/timer.hpp>
 
 #include <ctime>
 
@@ -68,13 +69,16 @@ int main(int argc, char *argv[])
 		std::string cmd = exec
 				+ " -i " + data_file
 				+ " -o " + output;
-		time_t begin = time(NULL);
+		boost::timer::cpu_timer timer;
 		std::thread worker(executeProgram, cmd);
-		time_t end = time(NULL);
 		worker.join();
-		if (std::find(keys.begin(), keys.end(), "Time") == keys.end())
-			keys.push_back("Time");
-		res[std::make_tuple(data_file, "Time")] = std::to_string(end - begin);
+		boost::timer::cpu_times elapsed = timer.elapsed();
+		if (std::find(keys.begin(), keys.end(), "CPU time") == keys.end())
+			keys.push_back("CPU time");
+		if (std::find(keys.begin(), keys.end(), "Wall clock time") == keys.end())
+			keys.push_back("Wall clock time");
+		res[std::make_tuple(data_file, "CPU time")]        = std::to_string((elapsed.user + elapsed.system) / 1e9);
+		res[std::make_tuple(data_file, "Wall clock time")] = std::to_string(elapsed.wall / 1e9);
 	}
 
 	// Read output files
