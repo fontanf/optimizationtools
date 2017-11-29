@@ -59,8 +59,6 @@ int main(int argc, char *argv[])
 	}
 
 	// Run algorithm
-	std::vector<Key> keys;
-	std::map<std::tuple<DataFilename, Key>, Value> res;
 	for (std::string data_file: vm["input-data"].as<std::vector<std::string>>()) {
 		std::cout << data_file << "... " << std::endl;
 		std::string output = generateOutputFilename(exec, data_file);
@@ -73,15 +71,20 @@ int main(int argc, char *argv[])
 		std::thread worker(executeProgram, cmd);
 		worker.join();
 		boost::timer::cpu_times elapsed = timer.elapsed();
-		if (std::find(keys.begin(), keys.end(), "CPU time") == keys.end())
-			keys.push_back("CPU time");
-		if (std::find(keys.begin(), keys.end(), "Wall clock time") == keys.end())
-			keys.push_back("Wall clock time");
-		res[std::make_tuple(data_file, "CPU time")]        = std::to_string((elapsed.user + elapsed.system) / 1e9);
-		res[std::make_tuple(data_file, "Wall clock time")] = std::to_string(elapsed.wall / 1e9);
+		if (!boost::filesystem::exists(output))
+			continue;
+		boost::property_tree::ptree pt;
+		boost::property_tree::ini_parser::read_ini(output, pt);
+		pt.put("Algorithm.CPU time", (elapsed.user + elapsed.system) / 1e9);
+		pt.put("Algorithm.WC time", elapsed.wall / 1e9);
+		write_ini(output, pt);
 	}
 
 	// Read output files
+	std::vector<Key> keys;
+	keys.push_back("CPU time");
+	keys.push_back("WC time");
+	std::map<std::tuple<DataFilename, Key>, Value> res;
 	for (std::string data_file: vm["input-data"].as<std::vector<std::string>>()) {
 		std::string output = generateOutputFilename(exec, data_file);
 		if (!boost::filesystem::exists(output))
@@ -102,6 +105,7 @@ int main(int argc, char *argv[])
 	// Write CSV file
 	std::ofstream out;
 	out.open(output_file);
+	out << exec << std::endl;
 	// First Line
 	out << "Data";
 	for (Key key: keys)
