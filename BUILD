@@ -2,12 +2,14 @@ cc_binary(
         name = "bench",
         srcs = ["Bench.cpp"],
         copts = ["-pthread"],
-        linkopts = ["-lpthread"],
+        linkopts = [
+                "-lpthread",
+                "-lboost_system",
+                "-lboost_filesystem",
+                "-lboost_program_options",
+                "-lboost_timer"
+        ],
         deps = [
-                "@boost//:filesystem",
-                "@boost//:system",
-                "@boost//:program_options",
-                "@boost//:timer",
         ],
         visibility = ["//visibility:public"],
 )
@@ -16,11 +18,13 @@ cc_binary(
         name = "timedBench",
         srcs = ["TimedBench.cpp"],
         copts = ["-pthread"],
-        linkopts = ["-lpthread"],
+        linkopts = [
+                "-lpthread",
+                "-lboost_system",
+                "-lboost_filesystem",
+                "-lboost_program_options",
+        ],
         deps = [
-                "@boost//:filesystem",
-                "@boost//:system",
-                "@boost//:program_options",
         ],
         visibility = ["//visibility:public"],
 )
