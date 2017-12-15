@@ -16,17 +16,24 @@ typedef std::string Value;
 
 void executeProgram(std::string s)
 {
+	std::cout << s << std::endl;
     system(s.c_str());
 }
 
 std::string generateOutputFilename(std::string exec, std::string data_file)
 {
 	std::hash<std::string> hash_fn;
-	std::string s;
-	s += std::to_string(hash_fn(exec + data_file));
-	s +=
-		"--" + boost::filesystem::path(exec).filename().string() +
-		"--" + boost::filesystem::path(data_file).filename().string() + ".ini";
+	std::string s = std::to_string(hash_fn(exec + data_file));
+
+	std::string s_tmp = boost::filesystem::path(exec).string();
+	std::replace_if(s_tmp.begin(), s_tmp.end(),
+		[](char c) -> bool { return !std::isalnum(c); }, '-');
+	s += "_" + s_tmp;
+
+	s_tmp = boost::filesystem::path(data_file).string();
+	std::replace_if(s_tmp.begin(), s_tmp.end(),
+		[](char c) -> bool { return !std::isalnum(c); }, '-');
+	s += "_" + s_tmp + ".ini";
 	return s;
 }
 
@@ -60,7 +67,6 @@ int main(int argc, char *argv[])
 
 	// Run algorithm
 	for (std::string data_file: vm["input-data"].as<std::vector<std::string>>()) {
-		std::cout << data_file << "... " << std::endl;
 		std::string output = generateOutputFilename(exec, data_file);
 		if (boost::filesystem::exists(output))
 			continue;
