@@ -1,6 +1,19 @@
+cc_library(
+        name = "info",
+        hdrs = ["info.hpp"],
+        srcs = [],
+        visibility = ["//visibility:public"],
+        linkopts = [
+                "-lboost_system",
+                "-lboost_filesystem",
+        ],
+        deps = [
+        ],
+)
+
 cc_binary(
         name = "bench",
-        srcs = ["Bench.cpp"],
+        srcs = ["bench.cpp"],
         copts = ["-pthread"],
         linkopts = [
                 "-lpthread",
@@ -15,8 +28,8 @@ cc_binary(
 )
 
 cc_binary(
-        name = "timedBench",
-        srcs = ["TimedBench.cpp"],
+        name = "timedbench",
+        srcs = ["timedbench.cpp"],
         copts = ["-pthread"],
         linkopts = [
                 "-lpthread",
