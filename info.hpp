@@ -7,15 +7,24 @@
 
 struct Info
 {
-    Info(): t1(std::chrono::high_resolution_clock::now()) {  }
+    Info(bool v = false, bool d = false):
+        verbose(v),
+        dbg(d),
+        t1(std::chrono::high_resolution_clock::now()) { }
+
+    ~Info() { }
+
     boost::property_tree::ptree pt;
-    bool verbose_ = false;
+    bool verbose;
+    bool dbg;
+    std::string debug_string;
+    std::ofstream dout;
     std::chrono::high_resolution_clock::time_point t1;
 
-    void verbose(bool b) { verbose_ = b; }
-    static bool verbose(const Info* info)
+    void debug(std::string message)
     {
-        return (info != NULL && info->verbose_);
+        if (dbg)
+            debug_string += message;
     }
 
     void write_ini(std::string file)
