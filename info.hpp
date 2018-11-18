@@ -10,8 +10,8 @@
 struct Info
 {
     Info(bool v = false, bool dbg = false, bool dbg_live = false):
-        verbose(v),
-        dbg(dbg),
+        verbose_(v),
+        dbg_(dbg),
         dbg_live(dbg_live),
         t1(std::chrono::high_resolution_clock::now()) { }
 
@@ -28,7 +28,7 @@ struct Info
     bool debug() { return (dbg_ || dbg_live); }
     void debug(std::string message)
     {
-        if (dbg)
+        if (dbg_)
             debug_string += message;
         if (dbg_live)
             std::cout << message;
