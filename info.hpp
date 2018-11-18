@@ -18,12 +18,14 @@ struct Info
     ~Info() { }
 
     boost::property_tree::ptree pt;
-    bool verbose;
-    bool dbg;
+    bool verbose_;
+    bool dbg_;
     bool dbg_live;
     std::string debug_string;
     std::chrono::high_resolution_clock::time_point t1;
 
+    bool verbose() { return verbose_; }
+    bool debug() { return (dbg_ || dbg_live); }
     void debug(std::string message)
     {
         if (dbg)
