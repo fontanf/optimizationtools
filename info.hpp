@@ -9,28 +9,27 @@
 
 struct Info
 {
-    Info(bool v = false, bool dbg = false, bool dbg_live = false):
-        verbose_(v),
-        dbg_(dbg),
-        dbg_live(dbg_live),
-        t1(std::chrono::high_resolution_clock::now()) { }
+    Info(): t1(std::chrono::high_resolution_clock::now()) { }
 
     ~Info() { }
 
     boost::property_tree::ptree pt;
-    bool verbose_;
-    bool dbg_;
-    bool dbg_live;
+    bool verbose_ = false;
+    bool dbg_ = false;
+    bool dbg_live_ = false;
     std::string debug_string;
     std::chrono::high_resolution_clock::time_point t1;
 
+    void set_verbose() { verbose_ = true; }
+    void set_debug() { dbg_ = true; }
+    void set_debuglive() { dbg_live_ = true; }
     bool verbose() { return verbose_; }
-    bool debug() { return (dbg_ || dbg_live); }
+    bool debug() { return (dbg_ || dbg_live_); }
     void debug(std::string message)
     {
         if (dbg_)
             debug_string += message;
-        if (dbg_live)
+        if (dbg_live_)
             std::cout << message;
     }
 
