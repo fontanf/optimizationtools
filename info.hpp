@@ -29,8 +29,10 @@ struct Info
 
     void verbose(std::string message)
     {
-        if (verbose_)
+        if (verbose_ || dbg_live_)
             std::cout << message;
+        if (dbg_)
+            debug_string += message;
     }
 
     void debug(std::string message)
