@@ -20,11 +20,19 @@ struct Info
     std::string debug_string;
     std::chrono::high_resolution_clock::time_point t1;
 
-    void set_verbose() { verbose_ = true; }
-    void set_debug() { dbg_ = true; }
+    void set_verbose()   { verbose_  = true; }
+    void set_debug()     { dbg_      = true; }
     void set_debuglive() { dbg_live_ = true; }
+
     bool verbose() { return verbose_; }
     bool debug() { return (dbg_ || dbg_live_); }
+
+    void verbose(std::string message)
+    {
+        if (verbose_)
+            std::cout << message;
+    }
+
     void debug(std::string message)
     {
         if (dbg_)
