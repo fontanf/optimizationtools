@@ -15,10 +15,10 @@ struct Info
     ~Info() { }
 
     boost::property_tree::ptree pt;
-    bool verbose_ = false;
-    bool dbg_ = false;
+    bool verbose_  = false;
+    bool dbg_      = false;
     bool dbg_live_ = false;
-    std::string debug_string;
+    std::string debug_string_;
     std::chrono::high_resolution_clock::time_point t1;
 
     void set_verbose()         { verbose_  = true; }
@@ -28,36 +28,38 @@ struct Info
     void set_debuglive()       { dbg_live_ = true; }
     void set_debuglive(bool b) { dbg_live_ = b; }
 
-    bool verbose() { return verbose_; }
-    bool debug() { return (dbg_ || dbg_live_); }
+    bool verbose() const { return verbose_; }
+    bool debug()   const { return (dbg_ || dbg_live_); }
 
     void verbose(std::string message)
     {
         if (verbose_ || dbg_live_)
             std::cout << message;
         if (dbg_)
-            debug_string += message;
+            debug_string_ += message;
     }
 
     void debug(std::string message)
     {
         if (dbg_)
-            debug_string += message;
+            debug_string_ += message;
         if (dbg_live_)
             std::cout << message;
     }
 
-    void write_ini(std::string file)
+    void write_ini(std::string file) const
     {
         if (file != "")
             boost::property_tree::write_ini(file, pt);
     }
 
-    void write_dbg(std::string file)
+    std::string debug_string() const { return debug_string_; }
+
+    void write_dbg(std::string file) const
     {
         if (file != "") {
             std::ofstream f(file);
-            f << debug_string;
+            f << debug_string_;
             f.close();
         }
     }
@@ -78,5 +80,6 @@ struct Info
         s << t;
         return s.str();
     }
+
 };
 
