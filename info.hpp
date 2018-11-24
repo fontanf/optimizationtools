@@ -8,6 +8,17 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
+#define STR1(x) std::string(   ) + #x + " " + std::to_string(x)
+#define STR2(x) std::string(" ") + #x + " " + std::to_string(x)
+#define STR3(x, y) std::string(   ) + #x + " " + std::to_string(y)
+#define STR4(x, y) std::string(" ") + #x + " " + std::to_string(y)
+
+#ifdef NDEBUG
+#define DBG(x)
+#else
+#define DBG(x) x
+#endif
+
 struct Info
 {
     Info(): t1(std::chrono::high_resolution_clock::now()) { }
