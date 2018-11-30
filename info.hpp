@@ -23,24 +23,50 @@ struct Info
 {
     Info(): t1(std::chrono::high_resolution_clock::now()) { }
 
-    ~Info() { }
-
     boost::property_tree::ptree pt;
     bool verbose_  = false;
     bool dbg_      = false;
     bool dbg_live_ = false;
     std::string debug_string_;
+    std::string ini_file_ = "";
+    std::string debug_file_ = "";
     std::chrono::high_resolution_clock::time_point t1;
+
+    /**
+     * Setters
+     */
 
     void set_verbose()         { verbose_  = true; }
     void set_verbose(bool b)   { verbose_  = b; }
+
     void set_debug()           { dbg_      = true; }
     void set_debug(bool b)     { dbg_      = b; }
+
     void set_debuglive()       { dbg_live_ = true; }
     void set_debuglive(bool b) { dbg_live_ = b; }
 
+    void set_inifile(std::string f) { ini_file_ = f; }
+    void set_debugfile(std::string f) { debug_file_ = f; }
+
+    /**
+     * Getters
+     */
+
     bool verbose() const { return verbose_; }
     bool debug()   const { return (dbg_ || dbg_live_); }
+
+    double elapsed_time() const
+    {
+        std::chrono::high_resolution_clock::time_point t2
+            = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> time_span
+            = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+        return time_span.count();
+    }
+
+    /**
+     * Modifiers
+     */
 
     void verbose(std::string message)
     {
@@ -58,6 +84,11 @@ struct Info
             std::cout << message;
     }
 
+    /**
+     * Writers
+     */
+
+    void write_ini() const { write_ini(ini_file_); }
     void write_ini(std::string file) const
     {
         if (file != "")
@@ -66,6 +97,7 @@ struct Info
 
     std::string debug_string() const { return debug_string_; }
 
+    void write_dbg() const { write_dbg(debug_file_); }
     void write_dbg(std::string file) const
     {
         if (file != "") {
@@ -75,14 +107,9 @@ struct Info
         }
     }
 
-    double elapsed_time() const
-    {
-        std::chrono::high_resolution_clock::time_point t2
-            = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> time_span
-            = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-        return time_span.count();
-    }
+    /**
+     * Others
+     */
 
     template <class T>
     static std::string to_string(T t)
