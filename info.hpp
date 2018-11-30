@@ -28,8 +28,9 @@ struct Info
     bool dbg_      = false;
     bool dbg_live_ = false;
     std::string debug_string_;
-    std::string ini_file_ = "";
+    std::string ini_file_   = "";
     std::string debug_file_ = "";
+    std::string cert_file_  = "";
     std::chrono::high_resolution_clock::time_point t1;
 
     /**
@@ -47,6 +48,7 @@ struct Info
 
     void set_inifile(std::string f) { ini_file_ = f; }
     void set_debugfile(std::string f) { debug_file_ = f; }
+    void set_certfile(std::string f) { cert_file_ = f; }
 
     /**
      * Getters
@@ -54,6 +56,7 @@ struct Info
 
     bool verbose() const { return verbose_; }
     bool debug()   const { return (dbg_ || dbg_live_); }
+    std::string cert_file() const { return cert_file_; }
 
     double elapsed_time() const
     {
