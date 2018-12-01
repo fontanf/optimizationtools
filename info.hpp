@@ -27,6 +27,7 @@ struct Info
     bool verbose_  = false;
     bool dbg_      = false;
     bool dbg_live_ = false;
+    bool write_only_at_the_end_ = true;
     std::string debug_string_;
     std::string ini_file_   = "";
     std::string debug_file_ = "";
@@ -46,6 +47,8 @@ struct Info
     void set_debuglive()       { dbg_live_ = true; }
     void set_debuglive(bool b) { dbg_live_ = b; }
 
+    void write_only_at_the_end(bool b) { write_only_at_the_end_ = b; }
+
     void set_inifile(std::string f) { ini_file_ = f; }
     void set_debugfile(std::string f) { debug_file_ = f; }
     void set_certfile(std::string f) { cert_file_ = f; }
@@ -56,6 +59,7 @@ struct Info
 
     bool verbose() const { return verbose_; }
     bool debug()   const { return (dbg_ || dbg_live_); }
+    bool write_only_at_the_end() { return write_only_at_the_end_; }
     std::string cert_file() const { return cert_file_; }
 
     double elapsed_time() const
