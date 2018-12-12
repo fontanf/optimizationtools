@@ -8,59 +8,67 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-#define STR1(x) std::string(   ) + #x + " " + std::to_string(x)
-#define STR2(x) std::string(" ") + #x + " " + std::to_string(x)
-#define STR3(x, y) std::string(   ) + #x + " " + std::to_string(y)
-#define STR4(x, y) std::string(" ") + #x + " " + std::to_string(y)
+#define PRINT(x) "x " << x
+
+#define VER(info, message) \
+    if (info.verbose) \
+        std::cout << message;
+
+#define PUT(info, key, value) \
+    info.pt.put(key, value);
+
+#define LOG_FOLD_START "{{{"
+#define LOG_FOLD_END   "}}}"
 
 #ifdef NDEBUG
-#define DBG(x)
+
+#define LOG(info, message)
+
 #else
-#define DBG(x) x
+
+#define LOG(info, message) \
+    if (info.logger.log_file.is_open()) \
+        info.logger.log_file << message; \
+    if (info.logger.log2stderr) \
+        std::cerr << message;
+
 #endif
+
+struct Logger
+{
+    Logger(std::string filepath = "", bool log2stderr = false): log2stderr(log2stderr)
+    {
+        if (filepath != "")
+            log_file.open(filepath);
+    }
+
+    ~Logger()
+    {
+        if (log_file.is_open())
+            log_file.close();
+    }
+
+    // Logger
+    bool log2stderr = false;
+    std::ofstream log_file;
+};
 
 struct Info
 {
-    Info(): t1(std::chrono::high_resolution_clock::now()) { }
+    Info(Logger& logger, bool verbose = false):
+        logger(logger),
+        verbose(verbose),
+        t1(std::chrono::high_resolution_clock::now()) { }
 
-    boost::property_tree::ptree pt;
-    bool verbose_  = false;
-    bool dbg_      = false;
-    bool dbg_live_ = false;
-    bool write_only_at_the_end_ = true;
-    std::string debug_string_;
-    std::string ini_file_   = "";
-    std::string debug_file_ = "";
-    std::string cert_file_  = "";
+    Logger& logger;
+
+    bool verbose = false;
+
+    /**
+     * Time
+     */
+
     std::chrono::high_resolution_clock::time_point t1;
-
-    /**
-     * Setters
-     */
-
-    void set_verbose()         { verbose_  = true; }
-    void set_verbose(bool b)   { verbose_  = b; }
-
-    void set_debug()           { dbg_      = true; }
-    void set_debug(bool b)     { dbg_      = b; }
-
-    void set_debuglive()       { dbg_live_ = true; }
-    void set_debuglive(bool b) { dbg_live_ = b; }
-
-    void write_only_at_the_end(bool b) { write_only_at_the_end_ = b; }
-
-    void set_inifile(std::string f) { ini_file_ = f; }
-    void set_debugfile(std::string f) { debug_file_ = f; }
-    void set_certfile(std::string f) { cert_file_ = f; }
-
-    /**
-     * Getters
-     */
-
-    bool verbose() const { return verbose_; }
-    bool debug()   const { return (dbg_ || dbg_live_); }
-    bool write_only_at_the_end() { return write_only_at_the_end_; }
-    std::string cert_file() const { return cert_file_; }
 
     double elapsed_time() const
     {
@@ -72,58 +80,19 @@ struct Info
     }
 
     /**
-     * Modifiers
+     * Info
      */
 
-    void verbose(std::string message)
+    boost::property_tree::ptree pt;
+    bool only_write_at_the_end = true;
+    std::string ini_file  = "";
+    std::string cert_file  = "";
+
+    void write_ini() const { write_ini(ini_file); }
+    void write_ini(std::string filename) const
     {
-        if (verbose_ || dbg_live_)
-            std::cout << message;
-        if (dbg_)
-            debug_string_ += message;
-    }
-
-    void debug(std::string message)
-    {
-        if (dbg_)
-            debug_string_ += message;
-        if (dbg_live_)
-            std::cout << message;
-    }
-
-    /**
-     * Writers
-     */
-
-    void write_ini() const { write_ini(ini_file_); }
-    void write_ini(std::string file) const
-    {
-        if (file != "")
-            boost::property_tree::write_ini(file, pt);
-    }
-
-    std::string debug_string() const { return debug_string_; }
-
-    void write_dbg() const { write_dbg(debug_file_); }
-    void write_dbg(std::string file) const
-    {
-        if (file != "") {
-            std::ofstream f(file);
-            f << debug_string_;
-            f.close();
-        }
-    }
-
-    /**
-     * Others
-     */
-
-    template <class T>
-    static std::string to_string(T t)
-    {
-        std::ostringstream s;
-        s << t;
-        return s.str();
+        if (filename != "")
+            boost::property_tree::write_ini(filename, pt);
     }
 
 };
