@@ -22,15 +22,17 @@
 
 #ifdef NDEBUG
 
-#define LOG(info, message)
+#define LOG(info, message) {  }
 
 #else
 
 #define LOG(info, message) \
-    if (info.logger.log_file.is_open()) \
-        info.logger.log_file << message; \
-    if (info.logger.log2stderr) \
-        std::cerr << message;
+    { \
+        if (info.logger.log_file.is_open()) \
+            info.logger.log_file << message; \
+        if (info.logger.log2stderr) \
+            std::cerr << message; \
+    }
 
 #endif
 
