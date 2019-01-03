@@ -22,10 +22,12 @@
 
 #ifdef NDEBUG
 
+#define DBG(x)
 #define LOG(info, message) {  }
 
 #else
 
+#define DBG(x) x
 #define LOG(info, message) \
     { \
         if (info.logger.log_file.is_open()) \
