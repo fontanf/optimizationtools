@@ -9,6 +9,7 @@ cc_library(
         ],
         deps = [
         ],
+        include_prefix = "benchtools/",
 )
 
 cc_binary(
