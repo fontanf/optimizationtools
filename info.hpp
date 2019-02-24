@@ -17,30 +17,53 @@
 #define PUT(info, key, value) \
     info.pt.put(key, value);
 
-#define LOG_FOLD_START "{{{"
-#define LOG_FOLD_END   "}}}"
-
 #ifdef NDEBUG
 
 #define DBG(x)
 #define LOG(info, message) {  }
+#define LOG_FOLD_START(info, message) {  }
+#define LOG_FOLD_END(info, message) {  }
+#define LOG_FOLD(info, message) {  }
+#define LOG_ON(info) {  }
+#define LOG_OFF(info) {  }
 
 #else
 
 #define DBG(x) x
 #define LOG(info, message) \
     { \
-        if (info.logger.log_file.is_open()) \
-            info.logger.log_file << message; \
-        if (info.logger.log2stderr) \
-            std::cerr << message; \
+        if (info.logger.on && info.logger.level <= info.logger.level_max) { \
+            if (info.logger.log_file.is_open()) \
+                info.logger.log_file << message; \
+            if (info.logger.log2stderr) \
+                std::cerr << message; \
+        } \
     }
+#define LOG_FOLD_START(info, message) \
+    { \
+        info.logger.level++; \
+        LOG(info, "{{{ " << message); \
+    }
+#define LOG_FOLD_END(info, message) \
+    { \
+        LOG(info, message << " }}}" << std::endl); \
+        info.logger.level--; \
+    }
+#define LOG_FOLD(info, message) \
+    { \
+        info.logger.level++; \
+        LOG(info, "{{{ " << message << " }}}" << std::endl); \
+        info.logger.level--; \
+    }
+#define LOG_ON(info)  { info.logger.on = true; }
+#define LOG_OFF(info) { info.logger.on = false; }
 
 #endif
 
 struct Logger
 {
-    Logger(std::string filepath = "", bool log2stderr = false): log2stderr(log2stderr)
+    Logger(std::string filepath = "", bool log2stderr = false, int level_max=999):
+        log2stderr(log2stderr), level_max(level_max)
     {
         if (filepath != "")
             log_file.open(filepath);
@@ -53,8 +76,11 @@ struct Logger
     }
 
     // Logger
+    bool on = true;
     bool log2stderr = false;
     std::ofstream log_file;
+    int level = 0;
+    int level_max = 999;
 };
 
 struct Info
