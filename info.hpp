@@ -4,18 +4,29 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <mutex>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
+/**
+ * Logger is not thread safe, each thread should have its own Logger.
+ * Output is thread safe, it should be shared between threads.
+ */
+
 #define PRINT(x) "x " << x
 
 #define VER(info, message) \
-    if (info.verbose) \
-        std::cout << message;
+    if (info.output->verbose) { \
+        info.output->mutex_cout.lock(); \
+        std::cout << message; \
+        info.output->mutex_cout.unlock(); \
+    }
 
 #define PUT(info, key, value) \
-    info.pt.put(key, value);
+    info.output->mutex_pt.lock(); \
+    info.output->pt.put(key, value); \
+    info.output->mutex_pt.unlock();
 
 #ifdef NDEBUG
 
@@ -32,73 +43,100 @@
 #define DBG(x) x
 #define LOG(info, message) \
     { \
-        if (info.logger.on && info.logger.level <= info.logger.level_max) { \
-            if (info.logger.log_file.is_open()) \
-                info.logger.log_file << message; \
-            if (info.logger.log2stderr) \
+        if (info.logger->on && info.logger->level <= info.logger->level_max) { \
+            if (info.logger->logfile.is_open()) \
+                info.logger->logfile << message; \
+            if (info.logger->log2stderr) \
                 std::cerr << message; \
         } \
     }
 #define LOG_FOLD_START(info, message) \
     { \
-        info.logger.level++; \
+        info.logger->level++; \
         LOG(info, "{{{ " << message); \
     }
 #define LOG_FOLD_END(info, message) \
     { \
-        LOG(info, message << " }}}" << std::endl); \
-        info.logger.level--; \
+        LOG(info, message << "}}}" << std::endl); \
+        info.logger->level--; \
     }
 #define LOG_FOLD(info, message) \
     { \
-        info.logger.level++; \
+        info.logger->level++; \
         LOG(info, "{{{ " << message << " }}}" << std::endl); \
-        info.logger.level--; \
+        info.logger->level--; \
     }
-#define LOG_ON(info)  { info.logger.on = true; }
-#define LOG_OFF(info) { info.logger.on = false; }
+#define LOG_ON(info)  { info.logger->on = true; }
+#define LOG_OFF(info) { info.logger->on = false; }
 
 #endif
 
+
 struct Logger
 {
-    Logger(std::string filepath = "", bool log2stderr = false, int level_max=999):
+    Logger(std::string filepath = "", bool log2stderr = false, int level_max = 999):
         log2stderr(log2stderr), level_max(level_max)
     {
         if (filepath != "")
-            log_file.open(filepath);
+            logfile.open(filepath);
     }
 
     ~Logger()
     {
-        if (log_file.is_open())
-            log_file.close();
+        if (logfile.is_open())
+            logfile.close();
     }
 
-    // Logger
+
     bool on = true;
     bool log2stderr = false;
-    std::ofstream log_file;
+    std::ofstream logfile;
     int level = 0;
     int level_max = 999;
 };
 
+struct Output
+{
+    boost::property_tree::ptree pt;
+    bool only_write_at_the_end = true;
+    std::string inifile  = "";
+    std::mutex mutex_pt;
+    std::mutex mutex_cout;
+    bool verbose = false;
+};
+
 struct Info
 {
-    Info(Logger& logger, bool verbose = false):
-        logger(logger),
-        verbose(verbose),
-        t1(std::chrono::high_resolution_clock::now()) { }
 
-    Logger& logger;
+public:
 
-    bool verbose = false;
+    Info()
+    {
+        logger = std::shared_ptr<Logger>(new Logger(""));
+        output = std::shared_ptr<Output>(new Output());
+        t1 = std::chrono::high_resolution_clock::now();
+    }
 
-    /**
-     * Time
-     */
+    Info(std::string logfile)
+    {
+        logger = std::shared_ptr<Logger>(new Logger(logfile));
+        output = std::shared_ptr<Output>(new Output());
+        t1 = std::chrono::high_resolution_clock::now();
+    }
 
-    std::chrono::high_resolution_clock::time_point t1;
+    Info& set_verbose(bool verbose) { output->verbose = verbose; return *this; }
+    Info& set_outputfile(std::string outputfile) { output->inifile = outputfile; return *this; }
+    Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
+    Info& set_loglevelmax(int loglevelmax) { logger->level_max = loglevelmax; return *this; }
+
+    Info(Info& info, bool keep_output, bool keep_logger)
+    {
+        output = (!keep_output)? std::shared_ptr<Output>(new Output()):
+                                 std::shared_ptr<Output>(info.output);
+        logger = (!keep_logger)? std::shared_ptr<Logger>(new Logger()):
+                                 std::shared_ptr<Logger>(info.logger);
+        t1 = info.t1;
+    }
 
     double elapsed_time() const
     {
@@ -109,21 +147,17 @@ struct Info
         return time_span.count();
     }
 
-    /**
-     * Info
-     */
-
-    boost::property_tree::ptree pt;
-    bool only_write_at_the_end = true;
-    std::string ini_file  = "";
-    std::string cert_file  = "";
-
-    void write_ini() const { write_ini(ini_file); }
+    void write_ini() const { write_ini(output->inifile); }
     void write_ini(std::string filename) const
     {
         if (filename != "")
-            boost::property_tree::write_ini(filename, pt);
+            boost::property_tree::write_ini(filename, output->pt);
     }
 
+
+    std::shared_ptr<Logger> logger = NULL;
+    std::shared_ptr<Output> output = NULL;
+    std::string cert_file = "";
+    std::chrono::high_resolution_clock::time_point t1;
 };
 
