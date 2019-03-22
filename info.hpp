@@ -16,6 +16,9 @@
 
 #define PRINT(x) "x " << x
 
+#define MUTEXSOLLOCK(info) info.output->mutex_sol.lock();
+#define MUTEXSOLUNLOCK(info) info.output->mutex_sol.unlock();
+
 #define VER(info, message) \
     if (info.output->verbose) { \
         info.output->mutex_cout.lock(); \
@@ -74,19 +77,8 @@
 
 struct Logger
 {
-    Logger(std::string filepath = "", bool log2stderr = false, int level_max = 999):
-        log2stderr(log2stderr), level_max(level_max)
-    {
-        if (filepath != "")
-            logfile.open(filepath);
-    }
-
-    ~Logger()
-    {
-        if (logfile.is_open())
-            logfile.close();
-    }
-
+    Logger(std::string filepath = "") { if (filepath != "") logfile.open(filepath); }
+    ~Logger() { if (logfile.is_open()) logfile.close(); }
 
     bool on = true;
     bool log2stderr = false;
@@ -98,11 +90,14 @@ struct Logger
 struct Output
 {
     boost::property_tree::ptree pt;
-    bool only_write_at_the_end = true;
+    bool onlywriteattheend = true;
     std::string inifile  = "";
+    std::string certfile = "";
     std::mutex mutex_pt;
     std::mutex mutex_cout;
+    std::mutex mutex_sol;
     bool verbose = false;
+    int sol_number = 0;
 };
 
 struct Info
@@ -126,6 +121,8 @@ public:
 
     Info& set_verbose(bool verbose) { output->verbose = verbose; return *this; }
     Info& set_outputfile(std::string outputfile) { output->inifile = outputfile; return *this; }
+    Info& set_certfile(std::string certfile) { output->certfile = certfile; return *this; }
+    Info& set_onlywriteattheend(bool b) { output->onlywriteattheend = b; return *this; }
     Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
     Info& set_loglevelmax(int loglevelmax) { logger->level_max = loglevelmax; return *this; }
 
@@ -157,7 +154,6 @@ public:
 
     std::shared_ptr<Logger> logger = NULL;
     std::shared_ptr<Output> output = NULL;
-    std::string cert_file = "";
     std::chrono::high_resolution_clock::time_point t1;
 };
 
