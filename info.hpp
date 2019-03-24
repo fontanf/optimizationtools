@@ -14,11 +14,6 @@
  * Output is thread safe, it should be shared between threads.
  */
 
-#define PRINT(x) "x " << x
-
-#define MUTEXSOLLOCK(info) info.output->mutex_sol.lock();
-#define MUTEXSOLUNLOCK(info) info.output->mutex_sol.unlock();
-
 #define VER(info, message) \
     if (info.output->verbose) { \
         info.output->mutex_cout.lock(); \
@@ -77,12 +72,13 @@
 
 struct Logger
 {
-    Logger(std::string filepath = "") { if (filepath != "") logfile.open(filepath); }
+    Logger(std::string filepath = ""): logfilename(filepath) { if (filepath != "") logfile.open(filepath); }
     ~Logger() { if (logfile.is_open()) logfile.close(); }
 
     bool on = true;
     bool log2stderr = false;
     std::ofstream logfile;
+    std::string logfilename;
     int level = 0;
     int level_max = 999;
 };
@@ -109,14 +105,14 @@ public:
     {
         logger = std::shared_ptr<Logger>(new Logger(""));
         output = std::shared_ptr<Output>(new Output());
-        t1 = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
     }
 
     Info(std::string logfile)
     {
         logger = std::shared_ptr<Logger>(new Logger(logfile));
         output = std::shared_ptr<Output>(new Output());
-        t1 = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
     }
 
     Info& set_verbose(bool verbose) { output->verbose = verbose; return *this; }
@@ -125,24 +121,39 @@ public:
     Info& set_onlywriteattheend(bool b) { output->onlywriteattheend = b; return *this; }
     Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
     Info& set_loglevelmax(int loglevelmax) { logger->level_max = loglevelmax; return *this; }
+    Info& set_timelimit(double t) { timelimit = t; return *this; }
 
-    Info(Info& info, bool keep_output, bool keep_logger)
+    Info(const Info& info, bool keep_output, std::string keep_logger)
     {
+        if (keep_logger == "") {
+            logger = std::shared_ptr<Logger>(info.logger);
+        } else {
+            std::string logfile = info.logger->logfilename;
+            if (logfile != "") {
+                for (int i=logfile.length()-1; i>=0; --i) {
+                    if (logfile[i] == '.') {
+                        logfile.insert(i, "_" + keep_logger);
+                        break;
+                    }
+                }
+            }
+            logger = std::shared_ptr<Logger>(new Logger(logfile));
+        }
         output = (!keep_output)? std::shared_ptr<Output>(new Output()):
                                  std::shared_ptr<Output>(info.output);
-        logger = (!keep_logger)? std::shared_ptr<Logger>(new Logger()):
-                                 std::shared_ptr<Logger>(info.logger);
-        t1 = info.t1;
+        start = info.start;
     }
 
     double elapsed_time() const
     {
-        std::chrono::high_resolution_clock::time_point t2
+        std::chrono::high_resolution_clock::time_point end
             = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> time_span
-            = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+            = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
         return time_span.count();
     }
+
+    bool check_time() const { return elapsed_time() <= timelimit; }
 
     void write_ini() const { write_ini(output->inifile); }
     void write_ini(std::string filename) const
@@ -154,6 +165,7 @@ public:
 
     std::shared_ptr<Logger> logger = NULL;
     std::shared_ptr<Output> output = NULL;
-    std::chrono::high_resolution_clock::time_point t1;
+    std::chrono::high_resolution_clock::time_point start;
+    double timelimit = std::numeric_limits<double>::infinity();
 };
 
