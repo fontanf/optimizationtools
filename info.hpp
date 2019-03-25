@@ -55,7 +55,7 @@
     }
 #define LOG_FOLD_END(info, message) \
     { \
-        LOG(info, message << "}}}" << std::endl); \
+        LOG(info, message << " }}}" << std::endl); \
         info.logger->level--; \
     }
 #define LOG_FOLD(info, message) \
