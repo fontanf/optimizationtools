@@ -142,6 +142,7 @@ public:
         output = (!keep_output)? std::shared_ptr<Output>(new Output()):
                                  std::shared_ptr<Output>(info.output);
         start = info.start;
+        timelimit = info.timelimit;
     }
 
     double elapsed_time() const
