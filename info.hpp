@@ -72,9 +72,6 @@
 
 struct Logger
 {
-    Logger(std::string filepath = ""): logfilename(filepath) { if (filepath != "") logfile.open(filepath); }
-    ~Logger() { if (logfile.is_open()) logfile.close(); }
-
     bool on = true;
     bool log2stderr = false;
     std::ofstream logfile;
@@ -103,14 +100,7 @@ public:
 
     Info()
     {
-        logger = std::shared_ptr<Logger>(new Logger(""));
-        output = std::shared_ptr<Output>(new Output());
-        start = std::chrono::high_resolution_clock::now();
-    }
-
-    Info(std::string logfile)
-    {
-        logger = std::shared_ptr<Logger>(new Logger(logfile));
+        logger = std::shared_ptr<Logger>(new Logger());
         output = std::shared_ptr<Output>(new Output());
         start = std::chrono::high_resolution_clock::now();
     }
@@ -119,6 +109,7 @@ public:
     Info& set_outputfile(std::string outputfile) { output->inifile = outputfile; return *this; }
     Info& set_certfile(std::string certfile) { output->certfile = certfile; return *this; }
     Info& set_onlywriteattheend(bool b) { output->onlywriteattheend = b; return *this; }
+    Info& set_logfile(std::string logfile) { if (logger->logfile.is_open()) logger->logfile.close(); logger->logfile.open(logfile); return *this; }
     Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
     Info& set_loglevelmax(int loglevelmax) { logger->level_max = loglevelmax; return *this; }
     Info& set_timelimit(double t) { timelimit = t; return *this; }
@@ -137,7 +128,8 @@ public:
                     }
                 }
             }
-            logger = std::shared_ptr<Logger>(new Logger(logfile));
+            logger = std::shared_ptr<Logger>();
+            set_logfile(logfile);
         }
         output = (!keep_output)? std::shared_ptr<Output>(new Output()):
                                  std::shared_ptr<Output>(info.output);
