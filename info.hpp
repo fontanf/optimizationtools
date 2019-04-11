@@ -109,10 +109,18 @@ public:
     Info& set_outputfile(std::string outputfile) { output->inifile = outputfile; return *this; }
     Info& set_certfile(std::string certfile) { output->certfile = certfile; return *this; }
     Info& set_onlywriteattheend(bool b) { output->onlywriteattheend = b; return *this; }
-    Info& set_logfile(std::string logfile) { if (logger->logfile.is_open()) logger->logfile.close(); logger->logfile.open(logfile); return *this; }
     Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
     Info& set_loglevelmax(int loglevelmax) { logger->level_max = loglevelmax; return *this; }
     Info& set_timelimit(double t) { timelimit = t; return *this; }
+    Info& set_logfile(std::string logfile)
+    {
+        if (logfile == "")
+            return *this;
+        if (logger->logfile.is_open())
+            logger->logfile.close();
+        logger->logfile.open(logfile);
+        return *this;
+    }
 
     Info(const Info& info, bool keep_output, std::string keep_logger)
     {
