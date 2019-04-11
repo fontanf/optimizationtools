@@ -136,7 +136,7 @@ public:
                     }
                 }
             }
-            logger = std::shared_ptr<Logger>();
+            logger = std::shared_ptr<Logger>(new Logger());
             set_logfile(logfile);
         }
         output = (!keep_output)? std::shared_ptr<Output>(new Output()):
