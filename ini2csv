@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+
+# Example:
+# ini2csv -f $(ls -v out/*.ini) -c Profit Time
+
+from argparse import ArgumentParser
+import configparser
+
+parser = ArgumentParser()
+parser.add_argument("-f", "--files", dest="files", nargs='*', required=True,
+                    help="input ini files", metavar="FILE")
+parser.add_argument("-c", "--columns", dest="columns", nargs='*', required=True,
+                    help="columns to extract")
+args = parser.parse_args()
+
+first = True
+for f in args.files:
+    ini = configparser.ConfigParser()
+    ini.optionxform=str
+    ini.read(f)
+    sec = ini.sections()[-1]
+    if first:
+        print(*ini[sec], sep=",")
+        first = False
+    if len(args.columns) == 0:
+        l = [ini[sec][key] for key in ini[sec]]
+    else:
+        l = [ini[sec][key] for key in args.columns]
+    print(*l, sep=",")
+
