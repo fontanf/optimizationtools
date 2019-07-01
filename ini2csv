@@ -1,7 +1,12 @@
 #!/usr/bin/python3
 
-# Example:
-# ini2csv -f $(ls -v out/*.ini) -c Profit Time
+"""Print csv output from ini file.
+
+Examples:
+ini2csv -f $(ls -v out/*.ini)
+ini2csv -f $(ls -v out/*.ini) -c Profit ObsNb WorkTime CompObsNb
+ini2csv -f $(ls -v out/*.ini) -c Profit ObsNb WorkTime CompObsNb -t 120
+"""
 
 from argparse import ArgumentParser
 import configparser
@@ -9,8 +14,10 @@ import configparser
 parser = ArgumentParser()
 parser.add_argument("-f", "--files", dest="files", nargs='*', required=True,
                     help="input ini files", metavar="FILE")
-parser.add_argument("-c", "--columns", dest="columns", nargs='*', required=True,
+parser.add_argument("-c", "--columns", dest="columns", nargs='*', required=False,
                     help="columns to extract")
+parser.add_argument("-t", "--time", dest="time", required=False,
+                    help="time", type=float)
 args = parser.parse_args()
 
 first = True
@@ -18,11 +25,27 @@ for f in args.files:
     ini = configparser.ConfigParser()
     ini.optionxform=str
     ini.read(f)
-    sec = ini.sections()[-1]
+
+    # Find section
+    if args.time == None:
+        sec = ini.sections()[-1]
+    else:
+        k = 0
+        while "Solution" + str(k + 1) in ini.sections() \
+                and (float)(ini["Solution" + str(k + 1)]["Time"]) <= args.time:
+            k += 1
+        sec = "Solution" + str(k)
+
+    # Print column names the first time
     if first:
-        print(*ini[sec], sep=",")
+        if args.columns == None:
+            print(*ini[sec], sep=",")
+        else:
+            print(*args.columns, sep=",")
         first = False
-    if len(args.columns) == 0:
+
+    # Print values
+    if args.columns == None:
         l = [ini[sec][key] for key in ini[sec]]
     else:
         l = [ini[sec][key] for key in args.columns]
