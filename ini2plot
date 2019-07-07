@@ -27,5 +27,6 @@ while "Solution" + str(k) in ini.sections():
     sec = "Solution" + str(k)
     f.write(ini[sec]["Time"] + " " + ini[sec][key] + "\n")
     k += 1
+f.write(ini["Solution"]["Time"] + " " + ini[sec][key] + "\n")
 f.close()
 
