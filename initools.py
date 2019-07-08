@@ -1,5 +1,4 @@
 
-
 def get_section(ini, time):
     k = 0
     while "Solution" + str(k + 1) in ini.sections() \
