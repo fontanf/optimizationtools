@@ -12,4 +12,5 @@ Provide various tools for optimization algorithms:
 
 ## `ini2csv`
 
-## `ini2plot`
+Convert ini output files to csv
+
