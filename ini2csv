@@ -8,8 +8,6 @@ ini2csv -f $(ls -v out/*.ini) -c Profit ObsNb WorkTime CompObsNb
 ini2csv -f $(ls -v out/*.ini) -c Profit ObsNb WorkTime CompObsNb -t 120
 """
 
-import initools
-
 from argparse import ArgumentParser
 import configparser
 
@@ -21,6 +19,13 @@ parser.add_argument("-c", "--columns", dest="columns", nargs='*', required=False
 parser.add_argument("-t", "--time", dest="time", required=False,
                     help="time", type=float)
 args = parser.parse_args()
+
+def get_section(ini, time):
+    k = 0
+    while "Solution" + str(k + 1) in ini.sections() \
+            and (float)(ini["Solution" + str(k + 1)]["Time"]) <= time:
+        k += 1
+    return "Solution" + str(k)
 
 first = True
 for f in args.files:
