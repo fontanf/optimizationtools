@@ -114,6 +114,7 @@ public:
     Info& set_timelimit(double t) { timelimit = t; return *this; }
     Info& set_logfile(std::string logfile)
     {
+        logger->logfilename = logfile;
         if (logfile == "")
             return *this;
         if (logger->logfile.is_open())
