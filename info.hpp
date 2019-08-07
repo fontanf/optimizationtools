@@ -91,6 +91,7 @@ struct Output
     std::mutex mutex_sol;
     bool verbose = false;
     int sol_number = 0;
+    int bnd_number = 0;
 };
 
 struct Info
