@@ -2,7 +2,7 @@ cc_library(
         name = "info",
         hdrs = [
                 "info.hpp",
-                "datasets.hpp",
+                "dataset.hpp",
         ],
         srcs = [],
         visibility = ["//visibility:public"],
