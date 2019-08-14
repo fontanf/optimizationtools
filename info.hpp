@@ -156,6 +156,7 @@ public:
         return time_span.count();
     }
 
+    double remaining_time() const { return std::max(0.0, timelimit - elapsed_time()); }
     bool check_time() const { return elapsed_time() <= timelimit; }
 
     void write_ini() const { write_ini(output->inifile); }

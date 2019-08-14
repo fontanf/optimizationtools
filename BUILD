@@ -3,8 +3,11 @@ cc_library(
         hdrs = [
                 "info.hpp",
                 "dataset.hpp",
+                "tools.hpp",
         ],
-        srcs = [],
+        srcs = [
+                "tools.cpp",
+        ],
         visibility = ["//visibility:public"],
         linkopts = [
                 "-lboost_system",
