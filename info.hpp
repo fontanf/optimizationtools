@@ -5,9 +5,9 @@
 #include <fstream>
 #include <sstream>
 #include <mutex>
+#include <iomanip>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
+#include <nlohmann/json.hpp>
 
 /**
  * Logger is not thread safe, each thread should have its own Logger.
@@ -21,10 +21,10 @@
         info.output->mutex_cout.unlock(); \
     }
 
-#define PUT(info, key, value) \
-    info.output->mutex_pt.lock(); \
-    info.output->pt.put(key, value); \
-    info.output->mutex_pt.unlock();
+#define PUT(info, cat, key, value) \
+    info.output->mutex_j.lock(); \
+    info.output->j[cat][key] = value; \
+    info.output->mutex_j.unlock();
 
 #ifdef NDEBUG
 
@@ -82,11 +82,11 @@ struct Logger
 
 struct Output
 {
-    boost::property_tree::ptree pt;
+    nlohmann::json j;
     bool onlywriteattheend = true;
     std::string inifile  = "";
     std::string certfile = "";
-    std::mutex mutex_pt;
+    std::mutex mutex_j;
     std::mutex mutex_cout;
     std::mutex mutex_sol;
     bool verbose = false;
@@ -162,10 +162,15 @@ public:
     void write_ini() const { write_ini(output->inifile); }
     void write_ini(std::string filename) const
     {
-        if (filename != "")
-            boost::property_tree::write_ini(filename, output->pt);
+        if (filename != "") {
+            std::ofstream o(filename);
+            o << std::setw(4) << output->j << std::endl;
+        }
     }
 
+    /**
+     * Attributes
+     */
 
     std::shared_ptr<Logger> logger = NULL;
     std::shared_ptr<Output> output = NULL;

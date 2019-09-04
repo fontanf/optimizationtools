@@ -9,12 +9,7 @@ cc_library(
                 "tools.cpp",
         ],
         visibility = ["//visibility:public"],
-        linkopts = [
-                "-lboost_system",
-                "-lboost_filesystem",
-        ],
-        deps = [
-        ],
+        deps = ["@json//:json"],
         include_prefix = "benchtools/",
 )
 
