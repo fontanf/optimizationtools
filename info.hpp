@@ -69,6 +69,8 @@
 
 #endif
 
+namespace benchtools
+{
 
 struct Logger
 {
@@ -158,6 +160,7 @@ public:
 
     double remaining_time() const { return std::max(0.0, timelimit - elapsed_time()); }
     bool check_time() const { return elapsed_time() <= timelimit; }
+    void reset_time() { start = std::chrono::high_resolution_clock::now(); }
 
     void write_ini() const { write_ini(output->inifile); }
     void write_ini(std::string filename) const
@@ -177,4 +180,6 @@ public:
     std::chrono::high_resolution_clock::time_point start;
     double timelimit = std::numeric_limits<double>::infinity();
 };
+
+}
 

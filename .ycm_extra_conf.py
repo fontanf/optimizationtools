@@ -88,7 +88,7 @@ def FlagsForFile( filename, **kwargs ):
     '-Werror',
     '-DUSE_CLANG_COMPLETER',
     '-I', '../',
-    '-I', './bazel-benchtools/external/json/include/',
+    '-I', './bazel-benchtools/external/json/single_include/',
     '-I', './bazel-benchtools/external/',
   ]
 
