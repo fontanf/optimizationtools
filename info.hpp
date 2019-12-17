@@ -166,8 +166,10 @@ public:
     void write_ini(std::string filename) const
     {
         if (filename != "") {
+            output->mutex_j.lock();
             std::ofstream o(filename);
             o << std::setw(4) << output->j << std::endl;
+            output->mutex_j.unlock();
         }
     }
 
