@@ -69,7 +69,7 @@
 
 #endif
 
-namespace benchtools
+namespace optimizationtools
 {
 
 struct Logger
