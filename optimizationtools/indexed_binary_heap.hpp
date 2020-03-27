@@ -1,5 +1,7 @@
 #pragma once
 
+#include "optimizationtools/indexed_set.hpp"
+
 #include <vector>
 #include <cstdint>
 #include <functional>
@@ -8,7 +10,7 @@ namespace optimizationtools
 {
 
 template <typename Key>
-class BinaryHeap
+class IndexedBinaryHeap
 {
 
 public:
@@ -17,9 +19,11 @@ public:
     typedef int64_t Position;
     typedef std::function<Key (Index)> Function;
 
-    BinaryHeap(Index element_number): positions_(element_number + 1, -1), heap_(1) { }
-    BinaryHeap(Index element_number, Function get_key);
-    virtual ~BinaryHeap() { }
+    IndexedBinaryHeap(Index element_number): heap_(1), positions_(element_number + 1, -1) { }
+    IndexedBinaryHeap(Index element_number, Function get_key);
+    void clear();
+    void reset(const IndexedSet& indexed_set, Function get_key);
+    virtual ~IndexedBinaryHeap() { }
 
     inline bool empty() const { return heap_.size() == 1; }
     inline Position size() const { return heap_.size() - 1; }
@@ -41,7 +45,7 @@ private:
 /******************************************************************************/
 
 template <typename Key>
-void BinaryHeap<Key>::percolate_up(Position position)
+void IndexedBinaryHeap<Key>::percolate_up(Position position)
 {
     while (position != 1 && cost(position) >= cost(position / 2)) {
         Position position_child = position / 2;
@@ -55,7 +59,7 @@ void BinaryHeap<Key>::percolate_up(Position position)
 }
 
 template <typename Key>
-void BinaryHeap<Key>::percolate_down(Position position)
+void IndexedBinaryHeap<Key>::percolate_down(Position position)
 {
     while (2 * position < (Position)heap_.size()) {
         Position position_child_1 = 2 * position;
@@ -84,7 +88,7 @@ void BinaryHeap<Key>::percolate_down(Position position)
 }
 
 template <typename Key>
-BinaryHeap<Key>::BinaryHeap(Index element_number, Function get_key):
+IndexedBinaryHeap<Key>::IndexedBinaryHeap(Index element_number, Function get_key):
     heap_(element_number + 1),
     positions_(element_number + 1)
 {
@@ -98,7 +102,7 @@ BinaryHeap<Key>::BinaryHeap(Index element_number, Function get_key):
 }
 
 template <typename Key>
-void BinaryHeap<Key>::update_key(Index index, Key key)
+void IndexedBinaryHeap<Key>::update_key(Index index, Key key)
 {
     Position position = positions_[index];
 
@@ -116,13 +120,36 @@ void BinaryHeap<Key>::update_key(Index index, Key key)
 }
 
 template <typename Key>
-void BinaryHeap<Key>::pop()
+void IndexedBinaryHeap<Key>::pop()
 {
     assert(size() > 0);
     positions_[heap_.back().first] = 1;
     heap_[1] = heap_.back();
     heap_.pop_back();
     percolate_down(1);
+}
+
+template <typename Key>
+void IndexedBinaryHeap<Key>::clear()
+{
+    for (auto& p: heap_)
+        positions_[p.first] = -1;
+    heap_.clear();
+    heap_.push_back({});
+}
+
+template <typename Key>
+void IndexedBinaryHeap<Key>::reset(const IndexedSet& indexed_set, Function get_key)
+{
+    clear();
+
+    for (Index index: indexed_set) {
+        positions_[index] = heap_.size();
+        heap_.push_back({index, get_key(index)});
+    }
+
+    for (Position position = (Position)heap_.size() - 1; position >= 1; --position)
+        percolate_down(position);
 }
 
 }

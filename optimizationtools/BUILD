@@ -7,8 +7,11 @@ cc_library(
 )
 
 cc_library(
-        name = "binary_heap",
-        hdrs = ["binary_heap.hpp"],
+        name = "indexed_collections",
+        hdrs = [
+                "indexed_set.hpp",
+                "indexed_binary_heap.hpp",
+        ],
         srcs = [ ],
         visibility = ["//visibility:public"],
 )
