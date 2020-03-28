@@ -29,7 +29,7 @@ public:
     std::vector<Index>::const_iterator out_end() const { return elements_.end(); }
 
     inline void set(Index index, Value value);
-    inline void clear();
+    inline void clear() { element_number_ = 0; };
 
     inline bool check() const;
 
@@ -54,12 +54,6 @@ IndexedMap<Value>::IndexedMap(Index element_number, Value null_value):
         elements_[index] = {index, null_value};
         positions_[index] = index;
     }
-}
-
-template <typename Value>
-void IndexedMap<Value>::clear()
-{
-    element_number_ = 0;
 }
 
 template <typename Value>
