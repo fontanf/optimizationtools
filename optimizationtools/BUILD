@@ -10,6 +10,7 @@ cc_library(
         name = "indexed_collections",
         hdrs = [
                 "indexed_set.hpp",
+                "indexed_map.hpp",
                 "indexed_binary_heap.hpp",
         ],
         srcs = [ ],

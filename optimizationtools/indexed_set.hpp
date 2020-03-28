@@ -29,6 +29,8 @@ public:
     inline bool remove(Index index);
     inline void clear();
 
+    inline bool check() const;
+
 private:
 
     std::vector<Index> set_;
@@ -69,6 +71,18 @@ inline bool IndexedSet::remove(Index index)
     positions_[set_[position]] = position;
     positions_[index] = -1;
 
+    return true;
+}
+
+bool IndexedSet::check() const
+{
+    for (Index index = 0; index < (Index)positions_.size(); ++index)
+        if (positions_[index] != -1)
+            if (set_[positions_[index]] != index)
+                return false;
+    for (Position position = 0; position < (Position)set_.size(); ++position)
+        if (positions_[set_[position]] != position)
+            return false;
     return true;
 }
 
