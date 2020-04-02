@@ -6,6 +6,7 @@
 #include <sstream>
 #include <mutex>
 #include <iomanip>
+#include <memory>
 
 #include <nlohmann/json.hpp>
 

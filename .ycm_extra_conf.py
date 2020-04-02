@@ -4,7 +4,7 @@ def Settings( **kwargs ):
                 '-x', 'c++',
                 '-Wall', '-Wextra', '-Werror',
                 '-I', '.',
-                '-I', './bazel-cats-ocp/external/json/single_include',
+                '-I', './bazel-optimizationtools/external/json/single_include',
                 ],
             }
 

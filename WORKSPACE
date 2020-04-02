@@ -1,5 +1,6 @@
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
-new_git_repository(
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
     name = "json",
     build_file_content = """
 cc_library(
@@ -9,7 +10,7 @@ cc_library(
         strip_include_prefix = "single_include/"
 )
 """,
-    remote = "https://github.com/nlohmann/json",
-    tag = "v3.7.0",
+    urls = ["https://github.com/nlohmann/json/releases/download/v3.7.3/include.zip"],
+    sha256 = "87b5884741427220d3a33df1363ae0e8b898099fbc59f1c451113f6732891014",
 )
 
