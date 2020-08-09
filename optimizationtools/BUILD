@@ -17,3 +17,12 @@ cc_library(
         visibility = ["//visibility:public"],
 )
 
+cc_library(
+        name = "utils",
+        hdrs = [
+                "utils.hpp",
+        ],
+        srcs = [ ],
+        visibility = ["//visibility:public"],
+)
+
