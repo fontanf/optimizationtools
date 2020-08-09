@@ -10,7 +10,7 @@ namespace optimizationtools
 template <typename T>
 std::vector<T> bob_floyd(T sample_size, T upper_bound, std::mt19937_64& generator);
 
-std::vector<std::string> split(std::string line, char c = ',');
+inline std::vector<std::string> split(std::string line, char c = ',');
 
 /******************************************************************************/
 
