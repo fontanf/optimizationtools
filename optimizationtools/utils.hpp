@@ -29,6 +29,12 @@ std::vector<T> bob_floyd(T sample_size, T upper_bound, std::mt19937_64& generato
     return samples;
 }
 
+static inline void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+        return !std::isspace(ch);
+    }));
+}
+
 static inline void rtrim(std::string &s) {
     s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
         return !std::isspace(ch);
@@ -38,10 +44,15 @@ static inline void rtrim(std::string &s) {
 std::vector<std::string> split(std::string line, char c)
 {
     std::vector<std::string> v;
-    std::stringstream ss(line);
+    std::string line_without_extra_whitespaces;
+    unique_copy(line.begin(), line.end(),
+            std::back_insert_iterator<std::string>(line_without_extra_whitespaces),
+            [](char a,char b){ return isspace(a) && isspace(b);});
+    std::stringstream ss(line_without_extra_whitespaces);
     std::string tmp;
     while (getline(ss, tmp, c)) {
         rtrim(tmp);
+        ltrim(tmp);
         v.push_back(tmp);
     }
     return v;

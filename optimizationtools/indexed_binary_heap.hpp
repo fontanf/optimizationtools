@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdint>
 #include <functional>
+#include <iostream>
 
 namespace optimizationtools
 {
@@ -47,7 +48,7 @@ private:
 template <typename Key>
 void IndexedBinaryHeap<Key>::percolate_up(Position position)
 {
-    while (position != 1 && cost(position) >= cost(position / 2)) {
+    while (position != 1 && cost(position) < cost(position / 2)) {
         Position position_child = position / 2;
         positions_[heap_[position].first] = position_child;
         positions_[heap_[position_child].first] = position;
@@ -123,6 +124,7 @@ template <typename Key>
 void IndexedBinaryHeap<Key>::pop()
 {
     assert(size() > 0);
+    positions_[heap_[1].first] = -1;
     positions_[heap_.back().first] = 1;
     heap_[1] = heap_.back();
     heap_.pop_back();

@@ -16,18 +16,18 @@ public:
     typedef int64_t Position;
     typedef typename std::vector<std::pair<Index, Value>>::const_iterator const_iterator;
 
-    IndexedMap(Index element_number, Value null_value);
-    virtual ~IndexedMap() { }
+    inline IndexedMap(Index element_number, Value null_value);
+    inline virtual ~IndexedMap() { }
 
     inline bool empty() const { return element_number_ == 0; }
     inline Position size() const { return element_number_; }
     inline bool contains(Index index) const { return (positions_[index] < element_number_); }
     inline Value operator[](Index index) const { return ((contains(index))? elements_[positions_[index]].second: null_value_); }
 
-    const_iterator begin() const { return elements_.begin(); }
-    const_iterator end() const { return elements_.begin() + element_number_; }
-    const_iterator out_begin() const { return elements_.begin() + element_number_; }
-    const_iterator out_end() const { return elements_.end(); }
+    inline const_iterator begin() const { return elements_.begin(); }
+    inline const_iterator end() const { return elements_.begin() + element_number_; }
+    inline const_iterator out_begin() const { return elements_.begin() + element_number_; }
+    inline const_iterator out_end() const { return elements_.end(); }
 
     inline void set(Index index, Value value);
     inline void clear() { element_number_ = 0; };

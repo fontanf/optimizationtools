@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <cassert>
 
 namespace optimizationtools
 {
@@ -14,17 +15,17 @@ public:
     typedef int64_t Index;
     typedef int64_t Position;
 
-    IndexedSet(Index element_number);
-    virtual ~IndexedSet() { }
+    inline IndexedSet(Index element_number);
+    inline virtual ~IndexedSet() { }
 
     inline bool empty() const { return element_number_ == 0; }
     inline Position size() const { return element_number_; }
     inline bool contains(Index index) const { return (positions_[index] < element_number_); }
 
-    std::vector<Index>::const_iterator begin() const { return elements_.begin(); }
-    std::vector<Index>::const_iterator end() const { return elements_.begin() + element_number_; }
-    std::vector<Index>::const_iterator out_begin() const { return elements_.begin() + element_number_; }
-    std::vector<Index>::const_iterator out_end() const { return elements_.end(); }
+    inline std::vector<Index>::const_iterator begin() const { return elements_.begin(); }
+    inline std::vector<Index>::const_iterator end() const { return elements_.begin() + element_number_; }
+    inline std::vector<Index>::const_iterator out_begin() const { return elements_.begin() + element_number_; }
+    inline std::vector<Index>::const_iterator out_end() const { return elements_.end(); }
 
     inline bool add(Index index);
     inline bool remove(Index index);
@@ -68,7 +69,7 @@ inline bool IndexedSet::add(Index index)
 inline bool IndexedSet::remove(Index index)
 {
     Position position = positions_[index];
-    if (position > element_number_)
+    if (position >= element_number_)
         return false;
     elements_[position] = elements_[element_number_ - 1];
     elements_[element_number_ - 1] = index;
