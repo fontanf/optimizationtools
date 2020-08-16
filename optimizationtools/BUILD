@@ -11,6 +11,7 @@ cc_library(
         hdrs = [
                 "indexed_set.hpp",
                 "indexed_map.hpp",
+                "doubly_indexed_map.hpp",
                 "indexed_binary_heap.hpp",
         ],
         srcs = [ ],
