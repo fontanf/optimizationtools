@@ -48,6 +48,8 @@ std::vector<std::string> split(std::string line, char c)
     unique_copy(line.begin(), line.end(),
             std::back_insert_iterator<std::string>(line_without_extra_whitespaces),
             [](char a,char b){ return isspace(a) && isspace(b);});
+    rtrim(line_without_extra_whitespaces);
+    ltrim(line_without_extra_whitespaces);
     std::stringstream ss(line_without_extra_whitespaces);
     std::string tmp;
     while (getline(ss, tmp, c)) {
