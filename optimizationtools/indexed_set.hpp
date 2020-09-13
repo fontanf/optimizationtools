@@ -21,6 +21,7 @@ public:
     inline bool empty() const { return element_number_ == 0; }
     inline Position size() const { return element_number_; }
     inline bool contains(Index index) const { return (positions_[index] < element_number_); }
+    inline Position position(Index index) const { return positions_[index]; }
 
     inline std::vector<Index>::const_iterator begin() const { return elements_.begin(); }
     inline std::vector<Index>::const_iterator end() const { return elements_.begin() + element_number_; }
