@@ -29,6 +29,7 @@ public:
     inline bool empty() const { return heap_.size() == 1; }
     inline Position size() const { return heap_.size() - 1; }
     inline std::pair<Index, Key> top() const { return heap_[1]; }
+    inline std::pair<Index, Key> top(Position position) const { return heap_[1 + position]; }
     inline void pop();
     inline void update_key(Index index, Key key);
 

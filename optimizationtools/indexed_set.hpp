@@ -7,6 +7,22 @@
 namespace optimizationtools
 {
 
+/*
+
+Removing elements while iterating:
+
+for (auto it = set.begin(); it != set.end();) {
+    bool remove = true;
+    // ...
+    if (remove) {
+        solution.remove(*it);
+    } else {
+        it++;
+    }
+}
+
+*/
+
 class IndexedSet
 {
 

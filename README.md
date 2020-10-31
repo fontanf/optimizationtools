@@ -13,6 +13,7 @@ The main advantage compared to the `std::priority_queue` is the possibility of u
 A set implementation.
 Elements are indices between `0` and `n`.
 
+* Initialize: `O(n)`
 * Get size: `O(1)`
 * Check if contains an element: `O(1)`
 * Add an element: `O(1)`
@@ -26,6 +27,7 @@ Elements are indices between `0` and `n`.
 A map implementation.
 Elements are indices between `0` and `n`.
 
+* Initialize: `O(n)`
 * Get size: `O(1)`
 * Check if contains an element: `O(1)`
 * Get the value an element: `O(1)`
@@ -41,6 +43,7 @@ A map implementation.
 Elements are indices between `0` and `n`.
 Values are indices between `0` and `m`.
 
+* Initialize: `O(n + m)`
 * Get size: `O(1)`
 * Check if contains an element: `O(1)`
 * Get the value an element: `O(1)`
