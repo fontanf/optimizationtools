@@ -20,6 +20,8 @@ def run(label, algorithm, instance_filter, timelimit):
         cert_path     = os.path.join(directory_out, row["Dataset"], row["Path"] + "_solution.txt")
         if not os.path.exists(os.path.dirname(output_path)):
             os.makedirs(os.path.dirname(output_path))
+        if os.path.exists(instance_path + ".lz4"):
+            os.system("lz4 \"" + instance_path + ".lz4\"")
 
         command = main_exec \
                 + " -v" \
@@ -33,6 +35,9 @@ def run(label, algorithm, instance_filter, timelimit):
         print(command)
         os.system(command)
         print()
+
+        if os.path.exists(instance_path + ".lz4"):
+            os.remove(instance_path)
 
 
 if __name__ == "__main__":
