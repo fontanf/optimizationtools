@@ -3,10 +3,10 @@ import argparse
 import csv
 import math
 import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import os
 import os.path
-matplotlib.use('agg')
 
 
 def process(benchmark, labels, instance_filter, timelimit):
@@ -257,7 +257,7 @@ def process(benchmark, labels, instance_filter, timelimit):
         times = [t / 1000 * timelimit for t in range(1000 + 1)]
         average_gaps = {}
         for label in labels:
-            average_gaps[label] = [(0, 0) for _ in range(timelimit + 1)]
+            average_gaps[label] = [(0, 0) for t in range(1000 + 1)]
 
         rows_new = []
         for row in rows_filtered:
@@ -272,9 +272,7 @@ def process(benchmark, labels, instance_filter, timelimit):
 
             # Plot best known solution.
             if benchmark == "heuristiclong":
-                duals = [None for _ in range(timelimit + 1)]
-                for t in range(timelimit + 1):
-                    duals[t] = float(row["Best known solution value"])
+                duals = [float(row["Best known solution value"]) for _ in range(1000 + 1)]
                 axs[0].plot(times, duals, drawstyle='steps', label="Best known solution value")
 
             for label in labels:
@@ -297,7 +295,7 @@ def process(benchmark, labels, instance_filter, timelimit):
                         rows_new[-1][label + " / " + key] = value
 
                 # Compute primal.
-                primals = [None for _ in range(timelimit + 1)]
+                primals = [None for _ in range(1000 + 1)]
                 k = 1
                 while "Solution" + str(k) in json_reader.keys():
                     v_curr = float(json_reader["Solution" + str(k)]["Value"])
@@ -334,7 +332,7 @@ def process(benchmark, labels, instance_filter, timelimit):
                         gaps[t] = 0
                     else:
                         gaps[t] = abs(p - d) / max(abs(p), abs(d))
-                    if t > 0 and gap[t - 1] == 0 and benchmark == "primaldual":
+                    if t > 0 and gaps[t - 1] == 0 and benchmark == "primaldual":
                         primals[t] = 0
                         duals[t]   = 0
                     area += gaps[t]
@@ -385,7 +383,7 @@ def process(benchmark, labels, instance_filter, timelimit):
         fig.set_figwidth(30)
         fig.suptitle(instance_filter)
         for label in labels:
-            for t in range(timelimit + 1):
+            for t in range(1000 + 1):
                 average_gaps[label][t] = average_gaps[label][t][0] / average_gaps[label][t][1]
             axs.plot(times, average_gaps[label], drawstyle='steps', label=label + " / Gap")
 
