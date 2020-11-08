@@ -14,7 +14,9 @@ def process(benchmark, labels, instance_filter, timelimit):
     reader = csv.DictReader(open(r"data/data.csv"))
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
     label_string = " VS ".join([str(label) for label in labels])
-    label_string = label_string.replace("/", "_")
+    label_string = " - " + label_string.replace("/", "_")
+    if len(label_string) > 64:
+        label_string = ""
     with open("data/data.csv", "r") as f:
         reader = csv.reader(f)
         fieldnames = next(reader)
@@ -69,7 +71,7 @@ def process(benchmark, labels, instance_filter, timelimit):
 
         # Draw filter plot.
         graph_path = "analysis" \
-                + "/exact - " + label_string \
+                + "/exact" + label_string \
                 + "/" + instance_filter \
                 + "/graph"
         if not os.path.isdir(os.path.dirname(graph_path)):
@@ -97,7 +99,7 @@ def process(benchmark, labels, instance_filter, timelimit):
 
         # Write filter csv file.
         csv_path = "analysis" \
-                + "/exact - " + label_string \
+                + "/exact" + label_string \
                 + "/" + instance_filter \
                 + "/results.csv"
         if not os.path.isdir(os.path.dirname(csv_path)):
@@ -133,6 +135,7 @@ def process(benchmark, labels, instance_filter, timelimit):
             instance_number += 1
 
             for label in labels:
+                print(label)
                 # Read json output file.
                 json_path = "output" \
                         + "/" + label \
@@ -183,14 +186,14 @@ def process(benchmark, labels, instance_filter, timelimit):
                 for g in range(math.ceil(1000 * gap), 1000 + 1):
                     feasible_gaps[label][g] += 1
                 rows_new[-1][label + " / Value"] = v_curr
-                rows_new[-1][label + " / Gap"] = gap
+                rows_new[-1][label + " / Gap"] = gap * 100
                 rows_new[-1][label + " / Time"] = t_curr
                 total_time[label] += t_curr
                 total_gap[label] += gap
 
         # Draw filter plot.
         graph_path = "analysis" \
-                + "/" + benchmark + " - " + label_string \
+                + "/" + benchmark + label_string \
                 + "/" + instance_filter \
                 + "/graph"
         if not os.path.isdir(os.path.dirname(graph_path)):
@@ -236,7 +239,7 @@ def process(benchmark, labels, instance_filter, timelimit):
 
         # Write filter csv file.
         csv_path = "analysis" \
-                + "/" + benchmark + " - " + label_string \
+                + "/" + benchmark + label_string \
                 + "/" + instance_filter \
                 + "/results.csv"
         if not os.path.isdir(os.path.dirname(csv_path)):
@@ -361,7 +364,7 @@ def process(benchmark, labels, instance_filter, timelimit):
             axs[1].grid(True)
             fig.tight_layout(pad=5.0)
             graph_path = "analysis" \
-                    + "/" + benchmark + " - " + label_string \
+                    + "/" + benchmark + label_string \
                     + "/" + row["Dataset"] \
                     + "/" + row["Path"]
             if not os.path.isdir(os.path.dirname(graph_path)):
@@ -373,7 +376,7 @@ def process(benchmark, labels, instance_filter, timelimit):
 
         # Draw filter plot.
         graph_path = "analysis" \
-                + "/" + benchmark + " - " + label_string \
+                + "/" + benchmark + label_string \
                 + "/" + instance_filter \
                 + "/graph"
         if not os.path.isdir(os.path.dirname(graph_path)):
@@ -403,7 +406,7 @@ def process(benchmark, labels, instance_filter, timelimit):
 
         # Write filter csv file.
         csv_path = "analysis" \
-                + "/" + benchmark + " - " + label_string \
+                + "/" + benchmark + label_string \
                 + "/" + instance_filter \
                 + "/results.csv"
         if not os.path.isdir(os.path.dirname(csv_path)):
