@@ -3,6 +3,8 @@
 #include <vector>
 #include <cstdint>
 #include <cassert>
+#include <random>
+#include <algorithm>
 
 namespace optimizationtools
 {
@@ -47,6 +49,7 @@ public:
     inline bool add(Index index);
     inline bool remove(Index index);
     inline void clear() { element_number_ = 0; }
+    inline void shuffle(std::mt19937_64& generator);
 
     inline bool check() const;
 
@@ -94,6 +97,14 @@ inline bool IndexedSet::remove(Index index)
     positions_[elements_[element_number_ - 1]] = element_number_ - 1;
     element_number_--;
     return true;
+}
+
+inline void IndexedSet::shuffle(std::mt19937_64& generator)
+{
+    std::shuffle(elements_.begin(), elements_.begin() + element_number_, generator);
+    std::shuffle(elements_.begin() + element_number_, elements_.end(), generator);
+    for (Position position = 0; position < (Position)elements_.size(); ++position)
+        positions_[elements_[position]] = position;
 }
 
 }
