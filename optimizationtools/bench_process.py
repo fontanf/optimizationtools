@@ -9,17 +9,69 @@ import os
 import os.path
 
 
-def process(benchmark, labels, instance_filter, timelimit):
+def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
 
-    reader = csv.DictReader(open(r"data/data.csv"))
+    print("benchmark:", benchmark)
+    print("labels:", labels)
+    print("filter:", instance_filter)
+    print("timelimit:", timelimit)
+    reader = csv.DictReader(open(datacsv_path))
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
     label_string = " VS ".join([str(label) for label in labels])
     label_string = " - " + label_string.replace("/", "_")
     if len(label_string) > 64:
         label_string = ""
-    with open("data/data.csv", "r") as f:
+    with open(datacsv_path, "r") as f:
         reader = csv.reader(f)
         fieldnames = next(reader)
+
+    if benchmark == "times":
+        rows_new = []
+        for row in rows_filtered:
+            rows_new.append(row)
+
+            for label in labels:
+                # Read json output file.
+                json_path = (
+                        "output"
+                        + "/" + label
+                        + "/" + row["Dataset"]
+                        + "/" + row["Path"] + ".json")
+                json_file = open(json_path, "r")
+                json_reader = json.load(json_file)
+
+                # Update fieldnames.
+                if len(rows_new) == 1:
+                    if "Algorithm" in json_reader.keys():
+                        for key in json_reader["Algorithm"].keys():
+                            fieldnames.append(label + " / " + key)
+                    fieldnames.append(label + " / Primal")
+                    fieldnames.append(label + " / Dual")
+                    fieldnames.append(label + " / Time")
+                if "Algorithm" in json_reader.keys():
+                    for key, value in json_reader["Algorithm"].items():
+                        rows_new[-1][label + " / " + key] = value
+
+                primal = float(json_reader["Solution"]["Value"])
+                dual = float(json_reader["Bound"]["Value"])
+                t_curr = float(json_reader["Solution"]["Time"])
+                rows_new[-1][label + " / Primal"] = primal
+                rows_new[-1][label + " / Dual"] = dual
+                rows_new[-1][label + " / Time"] = t_curr
+
+        # Write filter csv file.
+        csv_path = (
+                "analysis"
+                + "/times" + label_string
+                + "/" + instance_filter
+                + "/results.csv")
+        if not os.path.isdir(os.path.dirname(csv_path)):
+            os.makedirs(os.path.dirname(csv_path))
+        with open(csv_path, 'w') as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in rows_new:
+                writer.writerow(row)
 
     if benchmark == "exact":
 
@@ -39,10 +91,11 @@ def process(benchmark, labels, instance_filter, timelimit):
 
             for label in labels:
                 # Read json output file.
-                json_path = "output" \
-                        + "/" + label \
-                        + "/" + row["Dataset"] \
-                        + "/" + row["Path"] + ".json"
+                json_path = (
+                        "output"
+                        + "/" + label
+                        + "/" + row["Dataset"]
+                        + "/" + row["Path"] + ".json")
                 json_file = open(json_path, "r")
                 json_reader = json.load(json_file)
 
@@ -57,23 +110,62 @@ def process(benchmark, labels, instance_filter, timelimit):
                     for key, value in json_reader["Algorithm"].items():
                         rows_new[-1][label + " / " + key] = value
 
-                if (json_reader["Solution"]["Value"] != json_reader["Bound"]["Value"]):
+                if (json_reader["Solution"]["Time"] > timelimit):
                     total_time[label] += timelimit
                     continue
 
                 t_curr = float(json_reader["Solution"]["Time"])
-                v_curr = float(json_reader["Solution"]["Value"])
+                primal = float(json_reader["Solution"]["Value"])
+                dual = float(json_reader["Bound"]["Value"])
+                bkb = float(row["Best known bound"])
+                gap_primal_dual = None
+                gap_dual_bkb = None
+                if primal == dual:
+                    gap_primal_dual = 0
+                elif primal == float("inf") or primal == float("-inf") \
+                        or dual == float("inf") or dual == float("-inf"):
+                    gap_primal_dual = 1
+                elif primal * dual < 0:
+                    gap_primal_dual = 1
+                else:
+                    gap_primal_dual = abs(primal - dual) \
+                            / max(abs(primal), abs(dual))
+                if dual == bkb:
+                    gap_dual_bkb = 0
+                elif dual == float("inf") or dual == float("-inf") \
+                        or bkb == float("inf") or bkb == float("-inf"):
+                    gap_dual_bkb = 1
+                elif dual * bkb < 0:
+                    gap_dual_bkb = 1
+                else:
+                    gap_dual_bkb = abs(dual - bkb) / max(abs(dual), abs(bkb))
+                if gap_primal_dual > 0.001 or gap_dual_bkb > 0.001:
+                    print()
+                    print("ERROR")
+                    print("dataset:", row["Dataset"])
+                    print("path:", row["Path"])
+                    print("opt:", bkb)
+                    print("time:", t_curr)
+                    print("primal:", primal)
+                    print("dual:", dual)
+                    print("gap (primal/dual):", gap_primal_dual)
+                    print("gap (dual/bkb):", gap_dual_bkb)
+                    print()
+                    total_time[label] += timelimit
+                    continue
+
                 for t in range(math.ceil(1000 * t_curr / timelimit), 1000 + 1):
                     solved[label][t] += 1
-                rows_new[-1][label + " / Value"] = v_curr
+                rows_new[-1][label + " / Value"] = primal
                 rows_new[-1][label + " / Time"] = t_curr
                 total_time[label] += t_curr
 
         # Draw filter plot.
-        graph_path = "analysis" \
-                + "/exact" + label_string \
-                + "/" + instance_filter \
-                + "/graph"
+        graph_path = (
+                "analysis"
+                + "/exact" + label_string
+                + "/" + instance_filter
+                + "/graph")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -98,15 +190,17 @@ def process(benchmark, labels, instance_filter, timelimit):
         plt.close(fig)
 
         # Write filter csv file.
-        csv_path = "analysis" \
-                + "/exact" + label_string \
-                + "/" + instance_filter \
-                + "/results.csv"
+        csv_path = (
+                "analysis"
+                + "/exact" + label_string
+                + "/" + instance_filter
+                + "/results.csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
         for label in labels:
-            rows_new[-1][label + " / Time"] = total_time[label] / instance_number
+            rows_new[-1][label + " / Time"] \
+                    = total_time[label] / instance_number
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
@@ -116,7 +210,7 @@ def process(benchmark, labels, instance_filter, timelimit):
     elif benchmark == "heuristicshort" or benchmark == "bound":
 
         times = [t / 1000 * timelimit for t in range(1000 + 1)]
-        gaps  = [g / 1000 for g in range(1000 + 1)]
+        gaps = [g / 1000 for g in range(1000 + 1)]
         feasible_times = {}
         feasible_gaps = {}
         total_time = {}
@@ -137,10 +231,11 @@ def process(benchmark, labels, instance_filter, timelimit):
             for label in labels:
                 print(label)
                 # Read json output file.
-                json_path = "output" \
-                        + "/" + label \
-                        + "/" + row["Dataset"] \
-                        + "/" + row["Path"] + ".json"
+                json_path = (
+                        "output"
+                        + "/" + label
+                        + "/" + row["Dataset"]
+                        + "/" + row["Path"] + ".json")
                 json_file = open(json_path, "r")
                 json_reader = json.load(json_file)
 
@@ -156,7 +251,8 @@ def process(benchmark, labels, instance_filter, timelimit):
                     for key, value in json_reader["Algorithm"].items():
                         rows_new[-1][label + " / " + key] = value
 
-                if benchmark == "heuristicshort" and "Solution1" not in json_reader:
+                if benchmark == "heuristicshort" \
+                        and "Solution1" not in json_reader:
                     total_time[label] += timelimit
                     total_gap[label] += 1
                     continue
@@ -179,8 +275,15 @@ def process(benchmark, labels, instance_filter, timelimit):
                 else:
                     v_curr = float(json_reader["Bound"]["Value"])
                     bksv = float(row["Best known bound"])
-                gap = abs(v_curr - bksv) / max(abs(v_curr), abs(bksv)) \
-                        if v_curr != bksv else 0
+                gap = None
+                if bksv == v_curr:
+                    gap = 0
+                elif v_curr == float("inf"):
+                    gap = 1
+                elif v_curr * bksv < 0:
+                    gap = 1
+                else:
+                    gap = abs(v_curr - bksv) / max(abs(v_curr), abs(bksv))
                 for t in range(math.ceil(1000 * t_curr / timelimit), 1000 + 1):
                     feasible_times[label][t] += 1
                 for g in range(math.ceil(1000 * gap), 1000 + 1):
@@ -192,10 +295,11 @@ def process(benchmark, labels, instance_filter, timelimit):
                 total_gap[label] += gap
 
         # Draw filter plot.
-        graph_path = "analysis" \
-                + "/" + benchmark + label_string \
-                + "/" + instance_filter \
-                + "/graph"
+        graph_path = (
+                "analysis"
+                + "/" + benchmark + label_string
+                + "/" + instance_filter
+                + "/graph")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(2)
@@ -204,18 +308,30 @@ def process(benchmark, labels, instance_filter, timelimit):
         fig.suptitle(instance_filter)
 
         for label in labels:
-            axs[0].plot(times, feasible_times[label], drawstyle='steps', label=label)
-            axs[1].plot(gaps, feasible_gaps[label], drawstyle='steps', label=label)
+            axs[0].plot(
+                    times, feasible_times[label],
+                    drawstyle='steps', label=label)
+            axs[1].plot(
+                    gaps, feasible_gaps[label],
+                    drawstyle='steps', label=label)
 
         axs[0].set_xlim([0, timelimit])
         axs[0].set_ylim([0, instance_number])
         axs[0].set(xlabel='Time (s)')
         if benchmark == "heuristicshort":
-            axs[0].set_title("Number of instances for which the algorithm found a feasible solution")
-            axs[0].set(ylabel='Number of instances for which the algorithm found a feasible solution')
+            axs[0].set_title(
+                    "Number of instances for which the algorithm "
+                    "found a feasible solution")
+            axs[0].set(ylabel=(
+                    "Number of instances for which the algorithm "
+                    "found a feasible solution"))
         else:
-            axs[0].set_title("Number of instances for which the algorithm found a bound")
-            axs[0].set(ylabel='Number of instances for which the algorithm found a bound')
+            axs[0].set_title(
+                    "Number of instances for which the algorithm "
+                    "found a bound")
+            axs[0].set(ylabel=(
+                    "Number of instances for which the algorithm "
+                    "found a bound"))
         axs[0].grid(True)
         axs[0].legend(loc='lower right')
 
@@ -223,11 +339,19 @@ def process(benchmark, labels, instance_filter, timelimit):
         axs[1].set_ylim([0, instance_number])
         axs[1].set(xlabel='Gap')
         if benchmark == "heuristicshort":
-            axs[1].set_title("Number of instances for which the algorithm found a feasible solution")
-            axs[1].set(ylabel='Number of instances for which the algorithm found a feasible solution')
+            axs[1].set_title(
+                    "Number of instances for which the algorithm "
+                    "found a feasible solution")
+            axs[1].set(ylabel=(
+                    "Number of instances for which the algorithm "
+                    "found a feasible solution"))
         else:
-            axs[1].set_title("Number of instances for which the algorithm found a bound")
-            axs[1].set(ylabel='Number of instances for which the algorithm found a bound')
+            axs[1].set_title(
+                    "Number of instances for which the algorithm "
+                    "found a bound")
+            axs[1].set(ylabel=(
+                    "Number of instances for which the algorithm "
+                    "found a bound"))
         axs[1].grid(True)
         axs[1].legend(loc='lower right')
 
@@ -238,15 +362,17 @@ def process(benchmark, labels, instance_filter, timelimit):
         plt.close(fig)
 
         # Write filter csv file.
-        csv_path = "analysis" \
-                + "/" + benchmark + label_string \
-                + "/" + instance_filter \
-                + "/results.csv"
+        csv_path = (
+                "analysis"
+                + "/" + benchmark + label_string
+                + "/" + instance_filter
+                + "/results.csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
         for label in labels:
-            rows_new[-1][label + " / Time"] = total_time[label] / instance_number
+            rows_new[-1][label + " / Time"] \
+                    = total_time[label] / instance_number
             rows_new[-1][label + " / Gap"] = total_gap[label] / instance_number
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -275,15 +401,20 @@ def process(benchmark, labels, instance_filter, timelimit):
 
             # Plot best known solution.
             if benchmark == "heuristiclong":
-                duals = [float(row["Best known solution value"]) for _ in range(1000 + 1)]
-                axs[0].plot(times, duals, drawstyle='steps', label="Best known solution value")
+                duals = [float(row["Best known solution value"])
+                         for _ in range(1000 + 1)]
+                axs[0].plot(
+                        times, duals,
+                        drawstyle='steps',
+                        label="Best known solution value")
 
             for label in labels:
                 # Read json output file.
-                json_path = "output" \
-                        + "/" + label \
-                        + "/" + row["Dataset"] \
-                        + "/" + row["Path"] + ".json"
+                json_path = (
+                        "output"
+                        + "/" + label
+                        + "/" + row["Dataset"]
+                        + "/" + row["Path"] + ".json")
                 json_file = open(json_path, "r")
                 json_reader = json.load(json_file)
 
@@ -312,15 +443,16 @@ def process(benchmark, labels, instance_filter, timelimit):
 
                 # Compute dual
                 if benchmark == "primaldual":
+                    duals = [None for _ in range(1000 + 1)]
                     k = 1
-                    while "Bound" + str(k + 1) in d.keys():
+                    while "Bound" + str(k) in json_reader.keys():
                         v_curr = float(json_reader["Bound" + str(k)]["Value"])
                         t_curr = float(json_reader["Bound" + str(k)]["Time"])
                         t_next = float(json_reader["Bound" + str(k + 1)]["Time"]) \
                                 if "Bound" + str(k + 1) in json_reader.keys() \
                                 else timelimit
                         for t in range(math.ceil(1000 * t_curr / timelimit), math.floor(1000 * t_next / timelimit) + 1):
-                            primals[t] = v_curr
+                            duals[t] = v_curr
                         k += 1
 
                 # Compute gap
@@ -333,20 +465,34 @@ def process(benchmark, labels, instance_filter, timelimit):
                         gaps[t] = 1
                     elif p == d:
                         gaps[t] = 0
+                    elif p * d < 0:
+                        gaps[t] = 1
                     else:
                         gaps[t] = abs(p - d) / max(abs(p), abs(d))
-                    if t > 0 and gaps[t - 1] == 0 and benchmark == "primaldual":
+                    if t > 0 and gaps[t - 1] == 0 \
+                            and benchmark == "primaldual":
                         primals[t] = 0
-                        duals[t]   = 0
+                        duals[t] = 0
                     area += gaps[t]
-                    average_gaps[label][t] = (average_gaps[label][t][0] + gaps[t], average_gaps[label][t][1] + 1)
+                    average_gaps[label][t] = (
+                            average_gaps[label][t][0] + gaps[t],
+                            average_gaps[label][t][1] + 1)
                 rows_new[-1][label + " / Average gap"] = area / timelimit
 
                 # Add plots
-                axs[0].plot(times, primals, drawstyle='steps', label=label + " / Primal")
+                axs[0].plot(
+                        times, primals,
+                        drawstyle='steps',
+                        label=label + " / Primal")
                 if benchmark == "primaldual":
-                    axs[0].plot(times, duals,   drawstyle='steps', label=label + " / Dual")
-                axs[1].plot(times, gaps, drawstyle='steps', label=label + " / Gap")
+                    axs[0].plot(
+                            times, duals,
+                            drawstyle='steps',
+                            label=label + " / Dual")
+                axs[1].plot(
+                        times, gaps,
+                        drawstyle='steps',
+                        label=label + " / Gap")
 
             # Finish instance plot.
             axs[0].set_xlim([0, timelimit])
@@ -363,10 +509,11 @@ def process(benchmark, labels, instance_filter, timelimit):
             axs[1].legend(loc='lower right')
             axs[1].grid(True)
             fig.tight_layout(pad=5.0)
-            graph_path = "analysis" \
-                    + "/" + benchmark + label_string \
-                    + "/" + row["Dataset"] \
-                    + "/" + row["Path"]
+            graph_path = (
+                    "analysis"
+                    + "/" + benchmark + label_string
+                    + "/" + row["Dataset"]
+                    + "/" + row["Path"])
             if not os.path.isdir(os.path.dirname(graph_path)):
                 os.makedirs(os.path.dirname(graph_path))
             fig.savefig(graph_path + ".png", format="png")
@@ -375,10 +522,11 @@ def process(benchmark, labels, instance_filter, timelimit):
             plt.close(fig)
 
         # Draw filter plot.
-        graph_path = "analysis" \
-                + "/" + benchmark + label_string \
-                + "/" + instance_filter \
-                + "/graph"
+        graph_path = (
+                "analysis"
+                + "/" + benchmark + label_string
+                + "/" + instance_filter
+                + "/graph")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -387,8 +535,12 @@ def process(benchmark, labels, instance_filter, timelimit):
         fig.suptitle(instance_filter)
         for label in labels:
             for t in range(1000 + 1):
-                average_gaps[label][t] = average_gaps[label][t][0] / average_gaps[label][t][1]
-            axs.plot(times, average_gaps[label], drawstyle='steps', label=label + " / Gap")
+                average_gaps[label][t] \
+                        = average_gaps[label][t][0] / average_gaps[label][t][1]
+            axs.plot(
+                    times, average_gaps[label],
+                    drawstyle='steps',
+                    label=label + " / Gap")
 
         axs.set_xlim([0, timelimit])
         axs.set_ylim([0, 1])
@@ -405,15 +557,17 @@ def process(benchmark, labels, instance_filter, timelimit):
         plt.close(fig)
 
         # Write filter csv file.
-        csv_path = "analysis" \
-                + "/" + benchmark + label_string \
-                + "/" + instance_filter \
-                + "/results.csv"
+        csv_path = (
+                "analysis"
+                + "/" + benchmark + label_string
+                + "/" + instance_filter
+                + "/results.csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
         for label in labels:
-            rows_new[-1][label + " / Average gap"] = sum(average_gaps[label]) / timelimit
+            rows_new[-1][label + " / Average gap"] \
+                    = sum(average_gaps[label]) / timelimit
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
@@ -423,14 +577,36 @@ def process(benchmark, labels, instance_filter, timelimit):
     else:
         pass
 
+    print()
+
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument("-b", "--benchmark", type=str,                              help='')
-    parser.add_argument("-l", "--labels",    type=str,   nargs='+',                 help='')
-    parser.add_argument("-f", "--filter",    type=str,              default="True", help='')
-    parser.add_argument("-t", "--timelimit", type=float, nargs='?', default=3600,   help='')
+    parser.add_argument(
+            "-c", "--csv",
+            type=str,
+            default="data/data.csv",
+            help='')
+    parser.add_argument(
+            "-b", "--benchmark",
+            type=str,
+            help='')
+    parser.add_argument(
+            "-l", "--labels",
+            type=str,
+            nargs='+',
+            help='')
+    parser.add_argument(
+            "-f", "--filter",
+            type=str,
+            default="True",
+            help='')
+    parser.add_argument(
+            "-t", "--timelimit",
+            type=float,
+            nargs='?',
+            default=3600,
+            help='')
     args = parser.parse_args()
-    process(args.benchmark, args.labels, args.filter, args.timelimit)
-    quit()
+    process(args.csv, args.benchmark, args.labels, args.filter, args.timelimit)

@@ -3,11 +3,11 @@ import argparse
 import csv
 
 
-def run(label, algorithm, instance_filter, timelimit):
+def run(datacsv_path, label, algorithm, instance_filter, timelimit):
 
     main_exec = os.path.join(".", "bazel-bin", "*", "main")
     directory_in = "data"
-    reader = csv.DictReader(open(r"data/data.csv"))
+    reader = csv.DictReader(open(datacsv_path))
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
 
     directory_out = os.path.join("output", label)
@@ -15,23 +15,27 @@ def run(label, algorithm, instance_filter, timelimit):
         os.makedirs(directory_out)
 
     for row in rows_filtered:
-        instance_path = os.path.join(directory_in, row["Path"])
-        output_path   = os.path.join(directory_out, row["Dataset"], row["Path"] + ".json")
-        cert_path     = os.path.join(directory_out, row["Dataset"], row["Path"] + "_solution.txt")
+        instance_path = os.path.join(
+                directory_in, row["Path"])
+        output_path = os.path.join(
+                directory_out, row["Dataset"], row["Path"] + ".json")
+        cert_path = os.path.join(
+                directory_out, row["Dataset"], row["Path"] + "_solution.txt")
         if not os.path.exists(os.path.dirname(output_path)):
             os.makedirs(os.path.dirname(output_path))
         if os.path.exists(instance_path + ".lz4"):
             os.system("lz4 \"" + instance_path + ".lz4\"")
 
-        command = main_exec \
-                + " -v" \
-                + " -i \"" + instance_path + "\"" \
-                + (" -f " + row["Format"] if "Format" in row.keys() else "") \
-                + (" " + row["Options"] if "Options" in row.keys() else "") \
-                + (" -t " + str(timelimit) if timelimit is not None else "") \
-                + " -a \"" + algorithm + "\"" \
-                + " -c \"" + cert_path + "\"" \
-                + " -o \"" + output_path + "\""
+        command = (
+                main_exec
+                + " -v"
+                + " -i \"" + instance_path + "\""
+                + (" -f " + row["Format"] if "Format" in row.keys() else "")
+                + (" " + row["Options"] if "Options" in row.keys() else "")
+                + (" -t " + str(timelimit) if timelimit is not None else "")
+                + " -a \"" + algorithm + "\""
+                + " -c \"" + cert_path + "\""
+                + " -o \"" + output_path + "\"")
         print(command)
         os.system(command)
         print()
@@ -43,12 +47,35 @@ def run(label, algorithm, instance_filter, timelimit):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument("-l", "--labels",     type=str,   nargs='+',                 help='')
-    parser.add_argument("-a", "--algorithms", type=str,   nargs='+',                 help='')
-    parser.add_argument("-f", "--filter",     type=str,              default="True", help='')
-    parser.add_argument("-t", "--timelimit",  type=float, nargs='?', default=None,   help='')
+    parser.add_argument(
+            "-c",
+            "--csv",
+            type=str,
+            default="data/data.csv",
+            help='')
+    parser.add_argument(
+            "-l", "--labels",
+            type=str,
+            nargs='+',
+            help='')
+    parser.add_argument(
+            "-a", "--algorithms",
+            type=str,
+            nargs='+',
+            help='')
+    parser.add_argument(
+            "-f", "--filter",
+            type=str,
+            default="True",
+            help='')
+    parser.add_argument(
+            "-t", "--timelimit",
+            type=float,
+            nargs='?',
+            default=None,
+            help='')
     args = parser.parse_args()
     for i in range(len(args.algorithms)):
         algorithm = args.algorithms[i]
         label = args.labels[i] if args.labels is not None else algorithm
-        run(label, algorithm, args.filter, args.timelimit)
+        run(args.csv, label, algorithm, args.filter, args.timelimit)
