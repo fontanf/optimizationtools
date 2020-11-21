@@ -9,7 +9,13 @@ import os
 import os.path
 
 
-def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
+def process(
+        datacsv_path,
+        benchmark,
+        labels,
+        instance_filter,
+        timelimit,
+        output_name=None):
 
     print("benchmark:", benchmark)
     print("labels:", labels)
@@ -17,13 +23,18 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
     print("timelimit:", timelimit)
     reader = csv.DictReader(open(datacsv_path))
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
-    label_string = " VS ".join([str(label) for label in labels])
-    label_string = " - " + label_string.replace("/", "_")
-    if len(label_string) > 64:
-        label_string = ""
     with open(datacsv_path, "r") as f:
         reader = csv.reader(f)
         fieldnames = next(reader)
+    if output_name is None:
+        label_string = " VS ".join([str(label) for label in labels])
+        label_string = label_string.replace("/", "_")
+        if len(label_string) > 64:
+            label_string = str(hash(label_string))
+        filter_string = instance_filter
+        if len(filter_string) > 64:
+            filter_string = str(hash(filter_string))
+        output_name = label_string + " - " + filter_string
 
     if benchmark == "times":
         rows_new = []
@@ -62,9 +73,7 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         # Write filter csv file.
         csv_path = (
                 "analysis"
-                + "/times" + label_string
-                + "/" + instance_filter
-                + "/results.csv")
+                + "/times - " + output_name + ".csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         with open(csv_path, 'w') as csv_file:
@@ -163,9 +172,7 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         # Draw filter plot.
         graph_path = (
                 "analysis"
-                + "/exact" + label_string
-                + "/" + instance_filter
-                + "/graph")
+                + "/exact - " + output_name)
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -174,14 +181,15 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         fig.suptitle(instance_filter)
         for label in labels:
             axs.plot(times, solved[label], drawstyle='steps', label=label)
+        axs.hlines(instance_number, 0, timelimit, label="Instance number")
 
         axs.set_xlim([0, timelimit])
-        axs.set_ylim([0, instance_number])
+        axs.set_ylim([0, instance_number * 1.1])
         axs.set_title("Number of instances solved")
         axs.set(xlabel='Time (s)')
         axs.set(ylabel='Number of instances solved')
         axs.grid(True)
-        axs.legend(loc='lower right')
+        axs.legend(loc='upper right')
 
         fig.tight_layout(pad=5.0)
         fig.savefig(graph_path + ".png", format="png")
@@ -192,9 +200,7 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         # Write filter csv file.
         csv_path = (
                 "analysis"
-                + "/exact" + label_string
-                + "/" + instance_filter
-                + "/results.csv")
+                + "/exact - " + output_name + ".csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
@@ -297,9 +303,7 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         # Draw filter plot.
         graph_path = (
                 "analysis"
-                + "/" + benchmark + label_string
-                + "/" + instance_filter
-                + "/graph")
+                + "/" + benchmark + " - " + output_name)
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(2)
@@ -314,9 +318,11 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
             axs[1].plot(
                     gaps, feasible_gaps[label],
                     drawstyle='steps', label=label)
+        axs[0].hlines(instance_number, 0, timelimit, label="Instance number")
+        axs[1].hlines(instance_number, 0, 1, label="Instance number")
 
         axs[0].set_xlim([0, timelimit])
-        axs[0].set_ylim([0, instance_number])
+        axs[0].set_ylim([0, instance_number * 1.1])
         axs[0].set(xlabel='Time (s)')
         if benchmark == "heuristicshort":
             axs[0].set_title(
@@ -336,7 +342,7 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         axs[0].legend(loc='lower right')
 
         axs[1].set_xlim([0, 1])
-        axs[1].set_ylim([0, instance_number])
+        axs[1].set_ylim([0, instance_number * 1.1])
         axs[1].set(xlabel='Gap')
         if benchmark == "heuristicshort":
             axs[1].set_title(
@@ -364,16 +370,15 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         # Write filter csv file.
         csv_path = (
                 "analysis"
-                + "/" + benchmark + label_string
-                + "/" + instance_filter
-                + "/results.csv")
+                + "/" + benchmark + " - " + output_name + ".csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
         for label in labels:
             rows_new[-1][label + " / Time"] \
                     = total_time[label] / instance_number
-            rows_new[-1][label + " / Gap"] = total_gap[label] / instance_number
+            rows_new[-1][label + " / Gap"] \
+                    = total_gap[label] / instance_number * 100
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
@@ -507,11 +512,14 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
             axs[1].set(xlabel='Time (s)')
             axs[1].set(ylabel='Gap')
             axs[1].legend(loc='lower right')
+            axs[1].set_yticks([
+                0.01, 0.02, 0.05,
+                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
             axs[1].grid(True)
             fig.tight_layout(pad=5.0)
             graph_path = (
                     "analysis"
-                    + "/" + benchmark + label_string
+                    + "/" + benchmark + " - " + output_name
                     + "/" + row["Dataset"]
                     + "/" + row["Path"])
             if not os.path.isdir(os.path.dirname(graph_path)):
@@ -524,9 +532,7 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         # Draw filter plot.
         graph_path = (
                 "analysis"
-                + "/" + benchmark + label_string
-                + "/" + instance_filter
-                + "/graph")
+                + "/" + benchmark + " - " + output_name)
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -548,7 +554,10 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         axs.set(xlabel='Time (s)')
         axs.set(ylabel='Gap')
         axs.grid(True)
-        axs.legend(loc='lower right')
+        axs.legend(loc='upper right')
+        axs.set_yticks([
+                0.01, 0.02, 0.03, 0.04, 0.05,
+                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
 
         fig.tight_layout(pad=5.0)
         fig.savefig(graph_path + ".png", format="png")
@@ -559,9 +568,7 @@ def process(datacsv_path, benchmark, labels, instance_filter, timelimit):
         # Write filter csv file.
         csv_path = (
                 "analysis"
-                + "/" + benchmark + label_string
-                + "/" + instance_filter
-                + "/results.csv")
+                + "/" + benchmark + " - " + output_name + ".csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
