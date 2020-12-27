@@ -32,6 +32,7 @@ public:
     inline std::pair<Index, Key> top(Position position) const { return heap_[1 + position]; }
     inline void pop();
     inline void update_key(Index index, Key key);
+    inline Key key(Index index) { return heap_[positions_[index]].second; }
 
 private:
 
