@@ -70,6 +70,8 @@
 
 #endif
 
+#define TOL 0.000001
+
 namespace optimizationtools
 {
 
