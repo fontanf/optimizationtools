@@ -27,12 +27,3 @@ cc_library(
         visibility = ["//visibility:public"],
 )
 
-cc_library(
-        name = "column_generation_solver",
-        hdrs = [
-                "column_generation_solver.hpp",
-        ],
-        srcs = [ ],
-        visibility = ["//visibility:public"],
-)
-
