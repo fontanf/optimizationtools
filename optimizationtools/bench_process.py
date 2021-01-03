@@ -87,9 +87,11 @@ def process(
         times = [t / 1000 * timelimit for t in range(1000 + 1)]
         solved = {}
         total_time = {}
+        instance_times = {}
         for label in labels:
             solved[label] = [0 for _ in range(1000 + 1)]
             total_time[label] = 0
+            instance_times[label] = []
 
         instance_number = 0
         rows_new = []
@@ -161,18 +163,20 @@ def process(
                     print("gap (dual/bkb):", gap_dual_bkb)
                     print()
                     total_time[label] += timelimit
+                    instance_times[label].append(timelimit)
                     continue
 
+                instance_times[label].append(t_curr)
                 for t in range(math.ceil(1000 * t_curr / timelimit), 1000 + 1):
                     solved[label][t] += 1
                 rows_new[-1][label + " / Value"] = primal
                 rows_new[-1][label + " / Time"] = t_curr
                 total_time[label] += t_curr
 
-        # Draw filter plot.
+        # Draw solved-time plot.
         graph_path = (
                 "analysis"
-                + "/exact - " + output_name)
+                + "/exact - " + output_name + " - solved-time")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -190,6 +194,40 @@ def process(
         axs.set(ylabel='Number of instances solved')
         axs.grid(True)
         axs.legend(loc='upper right')
+
+        fig.tight_layout(pad=5.0)
+        fig.savefig(graph_path + ".png", format="png")
+        fig.savefig(graph_path + ".svg", format="svg")
+        fig.clf()
+        plt.close(fig)
+
+        # Draw time-instance plot.
+        graph_path = (
+                "analysis"
+                + "/exact - " + output_name + " - time-instance")
+        if not os.path.isdir(os.path.dirname(graph_path)):
+            os.makedirs(os.path.dirname(graph_path))
+        fig, axs = plt.subplots(1)
+        fig.set_figheight(15)
+        fig.set_figwidth(30)
+        fig.suptitle(instance_filter)
+        instances = list(range(len(rows_new)))
+        for label in labels:
+            axs.plot(
+                    instances,
+                    instance_times[label],
+                    label=label)
+
+        axs.set_title("Time")
+        axs.set(xlabel='Instance')
+        axs.set(ylabel='Time')
+        axs.grid(True)
+        axs.legend(loc='upper left')
+        axs.set_xticks(list(range(len(rows_new))))
+        axs.set_xticklabels(
+                [row["Dataset"] + "/" + row["Path"] for row in rows_new],
+                rotation=45,
+                ha='right')
 
         fig.tight_layout(pad=5.0)
         fig.savefig(graph_path + ".png", format="png")
@@ -221,11 +259,15 @@ def process(
         feasible_gaps = {}
         total_time = {}
         total_gap = {}
+        instance_times = {}
+        instance_gaps = {}
         for label in labels:
             feasible_times[label] = [0 for _ in times]
             feasible_gaps[label] = [0 for _ in gaps]
             total_time[label] = 0
             total_gap[label] = 0
+            instance_times[label] = []
+            instance_gaps[label] = []
 
         instance_number = 0
         rows_new = []
@@ -274,6 +316,8 @@ def process(
                 if t_curr > timelimit:
                     total_time[label] += timelimit
                     total_gap[label] += 1
+                    instance_times[label].append(timelimit)
+                    instance_gaps[label].append(1)
                     continue
                 if benchmark == "heuristicshort":
                     v_curr = float(json_reader["Solution"]["Value"])
@@ -294,16 +338,19 @@ def process(
                     feasible_times[label][t] += 1
                 for g in range(math.ceil(1000 * gap), 1000 + 1):
                     feasible_gaps[label][g] += 1
+                instance_times[label].append(t_curr)
+                instance_gaps[label].append(gap)
                 rows_new[-1][label + " / Value"] = v_curr
                 rows_new[-1][label + " / Gap"] = gap * 100
                 rows_new[-1][label + " / Time"] = t_curr
                 total_time[label] += t_curr
                 total_gap[label] += gap
 
-        # Draw filter plot.
+        # Draw solved-time and solved-gap plot.
         graph_path = (
                 "analysis"
-                + "/" + benchmark + " - " + output_name)
+                + "/" + benchmark + " - " + output_name
+                + " - solved-time sovled-gap")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(2)
@@ -367,6 +414,60 @@ def process(
         fig.clf()
         plt.close(fig)
 
+        # Draw time-instance and gap-instance plot.
+        graph_path = (
+                "analysis"
+                + "/" + benchmark + " - " + output_name
+                + " - time-instance gap-instance")
+        if not os.path.isdir(os.path.dirname(graph_path)):
+            os.makedirs(os.path.dirname(graph_path))
+        fig, axs = plt.subplots(2)
+        fig.set_figheight(15)
+        fig.set_figwidth(30)
+        fig.suptitle(instance_filter)
+        instances = list(range(len(rows_new)))
+        for label in labels:
+            axs[0].plot(
+                    instances,
+                    instance_times[label],
+                    label=label)
+            axs[1].plot(
+                    instances,
+                    instance_gaps[label],
+                    label=label)
+
+        axs[0].set_title("Time")
+        axs[0].set(xlabel='Instance')
+        axs[0].set(ylabel='Time')
+        axs[0].grid(True)
+        axs[0].legend(loc='upper left')
+        axs[0].set_xticks(list(range(len(rows_new))))
+        axs[0].set_xticklabels(
+                [row["Dataset"] + "/" + row["Path"] for row in rows_new],
+                rotation=45,
+                ha='right')
+
+        axs[1].set_ylim([0, 1])
+        axs[1].set_title("Gap")
+        axs[1].set(xlabel='Instance')
+        axs[1].set(ylabel='Gap')
+        axs[1].grid(True)
+        axs[1].legend(loc='upper left')
+        axs[1].set_xticks(list(range(len(rows_new))))
+        axs[1].set_xticklabels(
+                [row["Dataset"] + "/" + row["Path"] for row in rows_new],
+                rotation=45,
+                ha='right')
+        axs[1].set_yticks([
+                0.01, 0.02, 0.03, 0.04, 0.05,
+                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+
+        fig.tight_layout(pad=5.0)
+        fig.savefig(graph_path + ".png", format="png")
+        fig.savefig(graph_path + ".svg", format="svg")
+        fig.clf()
+        plt.close(fig)
+
         # Write filter csv file.
         csv_path = (
                 "analysis"
@@ -390,8 +491,10 @@ def process(
         # Initilialize times and average_gaps.
         times = [t / 1000 * timelimit for t in range(1000 + 1)]
         average_gaps = {}
+        instance_gaps = {}
         for label in labels:
             average_gaps[label] = [(0, 0) for t in range(1000 + 1)]
+            instance_gaps[label] = []
 
         rows_new = []
         for row in rows_filtered:
@@ -429,6 +532,7 @@ def process(
                         for key in json_reader["Algorithm"].keys():
                             fieldnames.append(label + " / " + key)
                     fieldnames.append(label + " / Average gap")
+                    fieldnames.append(label + " / Gap")
                 if "Algorithm" in json_reader.keys():
                     for key, value in json_reader["Algorithm"].items():
                         rows_new[-1][label + " / " + key] = value
@@ -483,6 +587,7 @@ def process(
                             average_gaps[label][t][0] + gaps[t],
                             average_gaps[label][t][1] + 1)
                 rows_new[-1][label + " / Average gap"] = area / timelimit
+                instance_gaps[label].append(gaps[-1])
 
                 # Add plots
                 axs[0].plot(
@@ -529,10 +634,10 @@ def process(
             fig.clf()
             plt.close(fig)
 
-        # Draw filter plot.
+        # Draw gap-time plot.
         graph_path = (
                 "analysis"
-                + "/" + benchmark + " - " + output_name)
+                + "/" + benchmark + " - " + output_name + " - gap-time")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -546,7 +651,7 @@ def process(
             axs.plot(
                     times, average_gaps[label],
                     drawstyle='steps',
-                    label=label + " / Gap")
+                    label=label)
 
         axs.set_xlim([0, timelimit])
         axs.set_ylim([0, 1])
@@ -555,6 +660,44 @@ def process(
         axs.set(ylabel='Gap')
         axs.grid(True)
         axs.legend(loc='upper right')
+        axs.set_yticks([
+                0.01, 0.02, 0.03, 0.04, 0.05,
+                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+
+        fig.tight_layout(pad=5.0)
+        fig.savefig(graph_path + ".png", format="png")
+        fig.savefig(graph_path + ".svg", format="svg")
+        fig.clf()
+        plt.close(fig)
+
+        # Draw gap-instance plot.
+        graph_path = (
+                "analysis"
+                + "/" + benchmark + " - " + output_name + " - gap-instance")
+        if not os.path.isdir(os.path.dirname(graph_path)):
+            os.makedirs(os.path.dirname(graph_path))
+        fig, axs = plt.subplots(1)
+        fig.set_figheight(15)
+        fig.set_figwidth(30)
+        fig.suptitle(instance_filter)
+        instances = list(range(len(rows_new)))
+        for label in labels:
+            axs.plot(
+                    instances,
+                    instance_gaps[label],
+                    label=label)
+
+        axs.set_ylim([0, 1])
+        axs.set_title("Gap")
+        axs.set(xlabel='Instance')
+        axs.set(ylabel='Gap')
+        axs.grid(True)
+        axs.legend(loc='upper left')
+        axs.set_xticks(list(range(len(rows_new))))
+        axs.set_xticklabels(
+                [row["Dataset"] + "/" + row["Path"] for row in rows_new],
+                rotation=45,
+                ha='right')
         axs.set_yticks([
                 0.01, 0.02, 0.03, 0.04, 0.05,
                 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
