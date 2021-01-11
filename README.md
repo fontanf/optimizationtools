@@ -55,6 +55,10 @@ Values are indices between `0` and `m`.
 * Get the number of values taken by at least one element: `O(1)`
 * Loop through values taken by at least one element: `O(number of values taken by at least one element)`
 
+### SortedOnDemandArray
+
+An array for which it is possible to request the `i`th smallest element without requiring to sort the whole array. It can be faster than a complete sorting if only a small fraction of the elements are requested.
+
 ## Utils
 
 * Bob Floyd's algorithm to draw `k` different integers in `[0, u]`. Typically used to draw seeds for each thread of a parallel algorithm from the initial seed.
