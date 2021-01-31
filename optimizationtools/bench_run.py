@@ -3,9 +3,8 @@ import argparse
 import csv
 
 
-def run(datacsv_path, label, algorithm, instance_filter, timelimit):
+def run(main_exec, datacsv_path, label, algorithm, instance_filter, timelimit):
 
-    main_exec = os.path.join(".", "bazel-bin", "*", "main")
     directory_in = "data"
     reader = csv.DictReader(open(datacsv_path))
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
@@ -33,7 +32,7 @@ def run(datacsv_path, label, algorithm, instance_filter, timelimit):
                 + (" -f " + row["Format"] if "Format" in row.keys() else "")
                 + (" " + row["Options"] if "Options" in row.keys() else "")
                 + (" -t " + str(timelimit) if timelimit is not None else "")
-                + " -a \"" + algorithm + "\""
+                + (" -a \"" + algorithm + "\"" if algorithm is not None else "")
                 + " -c \"" + cert_path + "\""
                 + " -o \"" + output_path + "\"")
         print(command)
@@ -47,6 +46,12 @@ def run(datacsv_path, label, algorithm, instance_filter, timelimit):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='')
+    parser.add_argument(
+            "-m",
+            "--main",
+            type=str,
+            default=os.path.join(".", "bazel-bin", "*", "main"),
+            help='')
     parser.add_argument(
             "-c",
             "--csv",
@@ -75,7 +80,11 @@ if __name__ == "__main__":
             default=None,
             help='')
     args = parser.parse_args()
-    for i in range(len(args.algorithms)):
-        algorithm = args.algorithms[i]
-        label = args.labels[i] if args.labels is not None else algorithm
-        run(args.csv, label, algorithm, args.filter, args.timelimit)
+    if args.algorithms is None:
+        label = args.labels[0] if args.labels is not None else args.main
+        run(args.main, args.csv, label, args.algorithms, args.filter, args.timelimit)
+    else:
+        for i in range(len(args.algorithms)):
+            algorithm = args.algorithms[i]
+            label = args.labels[i] if args.labels is not None else algorithm
+            run(args.main, args.csv, label, algorithm, args.filter, args.timelimit)

@@ -184,7 +184,12 @@ def process(
         fig.set_figwidth(30)
         fig.suptitle(instance_filter)
         for label in labels:
-            axs.plot(times, solved[label], drawstyle='steps', label=label)
+            axs.plot(
+                    times,
+                    solved[label],
+                    drawstyle='steps',
+                    label=label,
+                    alpha=0.5)
         axs.hlines(instance_number, 0, timelimit, label="Instance number")
 
         axs.set_xlim([0, timelimit])
@@ -216,7 +221,8 @@ def process(
             axs.plot(
                     instances,
                     instance_times[label],
-                    label=label)
+                    label=label,
+                    alpha=0.5)
 
         axs.set_title("Time")
         axs.set(xlabel='Instance')
@@ -360,11 +366,17 @@ def process(
 
         for label in labels:
             axs[0].plot(
-                    times, feasible_times[label],
-                    drawstyle='steps', label=label)
+                    times,
+                    feasible_times[label],
+                    drawstyle='steps',
+                    label=label,
+                    alpha=0.5)
             axs[1].plot(
-                    gaps, feasible_gaps[label],
-                    drawstyle='steps', label=label)
+                    gaps,
+                    feasible_gaps[label],
+                    drawstyle='steps',
+                    label=label,
+                    alpha=0.5)
         axs[0].hlines(instance_number, 0, timelimit, label="Instance number")
         axs[1].hlines(instance_number, 0, 1, label="Instance number")
 
@@ -430,11 +442,13 @@ def process(
             axs[0].plot(
                     instances,
                     instance_times[label],
-                    label=label)
+                    label=label,
+                    alpha=0.5)
             axs[1].plot(
                     instances,
                     instance_gaps[label],
-                    label=label)
+                    label=label,
+                    alpha=0.5)
 
         axs[0].set_title("Time")
         axs[0].set(xlabel='Instance')
@@ -514,7 +528,8 @@ def process(
                 axs[0].plot(
                         times, duals,
                         drawstyle='steps',
-                        label="Best known solution value")
+                        label="Best known solution value",
+                        alpha=0.5)
 
             for label in labels:
                 # Read json output file.
@@ -593,16 +608,19 @@ def process(
                 axs[0].plot(
                         times, primals,
                         drawstyle='steps',
-                        label=label + " / Primal")
+                        label=label + " / Primal",
+                        alpha=0.5)
                 if benchmark == "primaldual":
                     axs[0].plot(
                             times, duals,
                             drawstyle='steps',
-                            label=label + " / Dual")
+                            label=label + " / Dual",
+                            alpha=0.5)
                 axs[1].plot(
                         times, gaps,
                         drawstyle='steps',
-                        label=label + " / Gap")
+                        label=label + " / Gap",
+                        alpha=0.5)
 
             # Finish instance plot.
             axs[0].set_xlim([0, timelimit])
@@ -649,9 +667,11 @@ def process(
                 average_gaps[label][t] \
                         = average_gaps[label][t][0] / average_gaps[label][t][1]
             axs.plot(
-                    times, average_gaps[label],
+                    times,
+                    average_gaps[label],
                     drawstyle='steps',
-                    label=label)
+                    label=label,
+                    alpha=0.5)
 
         axs.set_xlim([0, timelimit])
         axs.set_ylim([0, 1])
@@ -685,7 +705,8 @@ def process(
             axs.plot(
                     instances,
                     instance_gaps[label],
-                    label=label)
+                    label=label,
+                    alpha=0.5)
 
         axs.set_ylim([0, 1])
         axs.set_title("Gap")
