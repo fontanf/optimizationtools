@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <algorithm>
 #include <random>
+#include <cassert>
+#include <iostream>
 
 namespace optimizationtools
 {
@@ -69,7 +71,7 @@ ElementId SortedOnDemandArray::get(Position position, std::mt19937_64& generator
         Position start = elements_[position].interval_start;
         Position end   = elements_[position].interval_end;
         if (end - start < 128) {
-            std::sort(elements_.begin() + start, elements_.begin() + end, compare_elements);
+            std::sort(elements_.begin() + start, elements_.begin() + end + 1, compare_elements);
             for (Position p = start; p <= end; ++p) {
                 elements_[p].interval_start = p;
                 elements_[p].interval_end   = p;
