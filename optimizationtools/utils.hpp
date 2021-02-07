@@ -12,6 +12,8 @@ std::vector<T> bob_floyd(T sample_size, T upper_bound, std::mt19937_64& generato
 
 inline std::vector<std::string> split(std::string line, char c = ',');
 
+inline void hash_combine(std::size_t& seed, const size_t v);
+
 /******************************************************************************/
 
 template <typename T>
@@ -47,7 +49,7 @@ std::vector<std::string> split(std::string line, char c)
     std::string line_without_extra_whitespaces;
     unique_copy(line.begin(), line.end(),
             std::back_insert_iterator<std::string>(line_without_extra_whitespaces),
-            [](char a,char b){ return isspace(a) && isspace(b);});
+            [](char a, char b){ return isspace(a) && isspace(b);});
     rtrim(line_without_extra_whitespaces);
     ltrim(line_without_extra_whitespaces);
     std::stringstream ss(line_without_extra_whitespaces);
@@ -58,6 +60,11 @@ std::vector<std::string> split(std::string line, char c)
         v.push_back(tmp);
     }
     return v;
+}
+
+void hash_combine(std::size_t& seed, const size_t v)
+{
+    seed ^= v + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
 }
