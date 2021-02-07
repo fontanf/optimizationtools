@@ -546,8 +546,13 @@ def process(
                     if "Algorithm" in json_reader.keys():
                         for key in json_reader["Algorithm"].keys():
                             fieldnames.append(label + " / " + key)
-                    fieldnames.append(label + " / Average gap")
+                    fieldnames.append(label + " / Primal")
+                    fieldnames.append(label + " / Primal time")
+                    if benchmark == "primaldual":
+                        fieldnames.append(label + " / Dual")
+                        fieldnames.append(label + " / Dual time")
                     fieldnames.append(label + " / Gap")
+                    fieldnames.append(label + " / Average gap")
                 if "Algorithm" in json_reader.keys():
                     for key, value in json_reader["Algorithm"].items():
                         rows_new[-1][label + " / " + key] = value
@@ -558,12 +563,15 @@ def process(
                 while "Solution" + str(k) in json_reader.keys():
                     v_curr = float(json_reader["Solution" + str(k)]["Value"])
                     t_curr = float(json_reader["Solution" + str(k)]["Time"])
-                    t_next = float(json_reader["Solution" + str(k + 1)]["Time"]) \
-                            if "Solution" + str(k + 1) in json_reader.keys() \
-                            else timelimit
+                    t_next = (
+                            float(json_reader["Solution" + str(k + 1)]["Time"])
+                            if "Solution" + str(k + 1) in json_reader.keys()
+                            else timelimit)
                     for t in range(math.ceil(1000 * t_curr / timelimit), math.floor(1000 * t_next / timelimit) + 1):
                         primals[t] = v_curr
                     k += 1
+                    rows_new[-1][label + " / Primal"] = v_curr
+                    rows_new[-1][label + " / Primal time"] = t_curr
 
                 # Compute dual
                 if benchmark == "primaldual":
@@ -572,12 +580,15 @@ def process(
                     while "Bound" + str(k) in json_reader.keys():
                         v_curr = float(json_reader["Bound" + str(k)]["Value"])
                         t_curr = float(json_reader["Bound" + str(k)]["Time"])
-                        t_next = float(json_reader["Bound" + str(k + 1)]["Time"]) \
-                                if "Bound" + str(k + 1) in json_reader.keys() \
-                                else timelimit
+                        t_next = (
+                                float(json_reader["Bound" + str(k + 1)]["Time"])
+                                if "Bound" + str(k + 1) in json_reader.keys()
+                                else timelimit)
                         for t in range(math.ceil(1000 * t_curr / timelimit), math.floor(1000 * t_next / timelimit) + 1):
                             duals[t] = v_curr
                         k += 1
+                        rows_new[-1][label + " / Dual"] = v_curr
+                        rows_new[-1][label + " / Dual time"] = t_curr
 
                 # Compute gap
                 gaps = [1 for _ in range(1000 + 1)]
@@ -601,7 +612,8 @@ def process(
                     average_gaps[label][t] = (
                             average_gaps[label][t][0] + gaps[t],
                             average_gaps[label][t][1] + 1)
-                rows_new[-1][label + " / Average gap"] = area / timelimit
+                rows_new[-1][label + " / Average gap"] = area / 1000
+                rows_new[-1][label + " / Gap"] = gaps[-1]
                 instance_gaps[label].append(gaps[-1])
 
                 # Add plots
