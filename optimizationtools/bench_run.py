@@ -3,7 +3,13 @@ import argparse
 import csv
 
 
-def run(main_exec, datacsv_path, label, algorithm, instance_filter, timelimit):
+def run(main_exec,
+        datacsv_path,
+        label,
+        algorithm,
+        instance_filter,
+        time_limit,
+        time_limit_field=None):
 
     directory_in = "data"
     reader = csv.DictReader(open(datacsv_path))
@@ -24,6 +30,8 @@ def run(main_exec, datacsv_path, label, algorithm, instance_filter, timelimit):
             os.makedirs(os.path.dirname(output_path))
         if os.path.exists(instance_path + ".lz4"):
             os.system("lz4 \"" + instance_path + ".lz4\"")
+        if time_limit_field is not None:
+            time_limit = float(row[time_limit_field])
 
         command = (
                 main_exec
@@ -31,7 +39,7 @@ def run(main_exec, datacsv_path, label, algorithm, instance_filter, timelimit):
                 + " -i \"" + instance_path + "\""
                 + (" -f " + row["Format"] if "Format" in row.keys() else "")
                 + (" " + row["Options"] if "Options" in row.keys() else "")
-                + (" -t " + str(timelimit) if timelimit is not None else "")
+                + (" -t " + str(time_limit) if time_limit is not None else "")
                 + (" -a \"" + algorithm + "\"" if algorithm is not None else "")
                 + " -c \"" + cert_path + "\""
                 + " -o \"" + output_path + "\"")
@@ -79,12 +87,29 @@ if __name__ == "__main__":
             nargs='?',
             default=None,
             help='')
+    parser.add_argument(
+            "-tf", "--timelimitfield",
+            type=str,
+            nargs='?',
+            help='')
     args = parser.parse_args()
     if args.algorithms is None:
         label = args.labels[0] if args.labels is not None else args.main
-        run(args.main, args.csv, label, args.algorithms, args.filter, args.timelimit)
+        run(args.main,
+            args.csv,
+            label,
+            args.algorithms,
+            args.filter,
+            args.timelimit,
+            args.timelimitfield)
     else:
         for i in range(len(args.algorithms)):
             algorithm = args.algorithms[i]
             label = args.labels[i] if args.labels is not None else algorithm
-            run(args.main, args.csv, label, algorithm, args.filter, args.timelimit)
+            run(args.main,
+                args.csv,
+                label,
+                algorithm,
+                args.filter,
+                args.timelimit,
+                args.timelimitfield)

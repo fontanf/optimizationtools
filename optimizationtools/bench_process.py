@@ -561,7 +561,7 @@ def process(
                 primals = [None for _ in range(1000 + 1)]
                 k = 1
                 while "Solution" + str(k) in json_reader.keys():
-                    v_curr = float(json_reader["Solution" + str(k)]["Value"])
+                    v_curr = float(json_reader["Solution" + str(k)]["Value"].split(' ')[0])
                     t_curr = float(json_reader["Solution" + str(k)]["Time"])
                     t_next = (
                             float(json_reader["Solution" + str(k + 1)]["Time"])
