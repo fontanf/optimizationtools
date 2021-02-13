@@ -12,7 +12,7 @@ namespace optimizationtools
 
 typedef int64_t ElementId;
 typedef int64_t Position;
-typedef int64_t Cost;
+typedef double Cost;
 
 struct Element
 {
@@ -67,6 +67,8 @@ bool compare_elements(const Element& element_1, const Element& element_2)
 
 ElementId SortedOnDemandArray::get(Position position, std::mt19937_64& generator)
 {
+    assert(position >= 0);
+    assert(position < (Position)elements_.size());
     while (elements_[position].interval_start != elements_[position].interval_end) {
         Position start = elements_[position].interval_start;
         Position end   = elements_[position].interval_end;
