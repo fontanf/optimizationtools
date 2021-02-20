@@ -612,7 +612,7 @@ def process(
                     average_gaps[label][t] = (
                             average_gaps[label][t][0] + gaps[t],
                             average_gaps[label][t][1] + 1)
-                rows_new[-1][label + " / Average gap"] = area / 1000
+                rows_new[-1][label + " / Average gap"] = area / 1001
                 rows_new[-1][label + " / Gap"] = gaps[-1]
                 instance_gaps[label].append(gaps[-1])
 
