@@ -1,12 +1,12 @@
-import json
+import os
+import os.path
 import argparse
+import json
 import csv
 import math
 import matplotlib
 matplotlib.use('agg')
-import matplotlib.pyplot as plt
-import os
-import os.path
+import matplotlib.pyplot as plt  # noqa: E402
 
 
 def process(
@@ -123,6 +123,7 @@ def process(
 
                 if (json_reader["Solution"]["Time"] > timelimit):
                     total_time[label] += timelimit
+                    instance_times[label].append(timelimit)
                     continue
 
                 t_curr = float(json_reader["Solution"]["Time"])
@@ -136,6 +137,8 @@ def process(
                 elif primal == float("inf") or primal == float("-inf") \
                         or dual == float("inf") or dual == float("-inf"):
                     gap_primal_dual = 1
+                elif abs(primal - dual) < 10e-8:
+                    gap_primal_dual = 0
                 elif primal * dual < 0:
                     gap_primal_dual = 1
                 else:
@@ -146,6 +149,8 @@ def process(
                 elif dual == float("inf") or dual == float("-inf") \
                         or bkb == float("inf") or bkb == float("-inf"):
                     gap_dual_bkb = 1
+                elif abs(dual - bkb) < 10e-8:
+                    gap_dual_bkb = 0
                 elif dual * bkb < 0:
                     gap_dual_bkb = 1
                 else:
