@@ -15,12 +15,14 @@ def process(
         labels,
         instance_filter,
         timelimit,
+        objective_sense="min",
         output_name=None):
 
     print("benchmark:", benchmark)
     print("labels:", labels)
     print("filter:", instance_filter)
     print("timelimit:", timelimit)
+    objective_sense_field = "Objective sense"
     reader = csv.DictReader(open(datacsv_path))
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
     with open(datacsv_path, "r") as f:
@@ -100,6 +102,9 @@ def process(
             rows_new.append(row)
             instance_number += 1
 
+            if objective_sense_field in row:
+                objective_sense = row[objective_sense_field]
+
             for label in labels:
                 # Read json output file.
                 json_path = (
@@ -141,8 +146,11 @@ def process(
                     gap_primal_dual = 0
                 elif primal * dual < 0:
                     gap_primal_dual = 1
+                elif objective_sense == "min":
+                    gap_primal_dual = (primal - dual) \
+                            / max(abs(primal), abs(dual))
                 else:
-                    gap_primal_dual = abs(primal - dual) \
+                    gap_primal_dual = (dual - primal) \
                             / max(abs(primal), abs(dual))
                 if dual == bkb:
                     gap_dual_bkb = 0
@@ -153,8 +161,10 @@ def process(
                     gap_dual_bkb = 0
                 elif dual * bkb < 0:
                     gap_dual_bkb = 1
+                elif objective_sense == "min":
+                    gap_dual_bkb = (dual - bkb) / max(abs(dual), abs(bkb))
                 else:
-                    gap_dual_bkb = abs(dual - bkb) / max(abs(dual), abs(bkb))
+                    gap_dual_bkb = (bkb - dual) / max(abs(dual), abs(bkb))
                 if gap_primal_dual > 0.001 or gap_dual_bkb > 0.001:
                     print()
                     print("ERROR")
@@ -287,6 +297,9 @@ def process(
             rows_new.append(row)
             instance_number += 1
 
+            if objective_sense_field in row:
+                objective_sense = row[objective_sense_field]
+
             for label in labels:
                 print(label)
                 # Read json output file.
@@ -343,8 +356,10 @@ def process(
                     gap = 1
                 elif v_curr * bksv < 0:
                     gap = 1
+                elif objective_sense == "min":
+                    gap = (v_curr - bksv) / max(abs(v_curr), abs(bksv))
                 else:
-                    gap = abs(v_curr - bksv) / max(abs(v_curr), abs(bksv))
+                    gap = (bksv - v_curr) / max(abs(v_curr), abs(bksv))
                 for t in range(math.ceil(1000 * t_curr / timelimit), 1000 + 1):
                     feasible_times[label][t] += 1
                 for g in range(math.ceil(1000 * gap), 1000 + 1):
@@ -520,6 +535,9 @@ def process(
             print(row["Dataset"] + "/" + row["Path"])
             rows_new.append(row)
 
+            if objective_sense_field in row:
+                objective_sense = row[objective_sense_field]
+
             # Initiialize instance plot.
             fig, axs = plt.subplots(2)
             fig.set_figheight(15)
@@ -566,7 +584,7 @@ def process(
                 primals = [None for _ in range(1000 + 1)]
                 k = 1
                 while "Solution" + str(k) in json_reader.keys():
-                    v_curr = float(json_reader["Solution" + str(k)]["Value"].split(' ')[0])
+                    v_curr = float(str(json_reader["Solution" + str(k)]["Value"]).split(' ')[0])
                     t_curr = float(json_reader["Solution" + str(k)]["Time"])
                     t_next = (
                             float(json_reader["Solution" + str(k + 1)]["Time"])
@@ -607,8 +625,10 @@ def process(
                         gaps[t] = 0
                     elif p * d < 0:
                         gaps[t] = 1
+                    elif objective_sense == "min":
+                        gaps[t] = (p - d) / max(abs(p), abs(d))
                     else:
-                        gaps[t] = abs(p - d) / max(abs(p), abs(d))
+                        gaps[t] = (d - p) / max(abs(p), abs(d))
                     if t > 0 and gaps[t - 1] == 0 \
                             and benchmark == "primaldual":
                         primals[t] = 0
@@ -645,13 +665,19 @@ def process(
             axs[0].set(xlabel='Time (s)')
             axs[0].set(ylabel='Bounds')
             axs[0].grid(True)
-            axs[0].legend(loc='lower right')
+            if objective_sense == "min":
+                axs[0].legend(loc='upper right')
+            else:
+                axs[0].legend(loc='lower right')
             axs[1].set_xlim([0, timelimit])
             axs[1].set_ylim([0, 1])
             axs[1].set_title("Gap")
             axs[1].set(xlabel='Time (s)')
             axs[1].set(ylabel='Gap')
-            axs[1].legend(loc='lower right')
+            if objective_sense == "min":
+                axs[1].legend(loc='upper right')
+            else:
+                axs[1].legend(loc='lower right')
             axs[1].set_yticks([
                 0.01, 0.02, 0.05,
                 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
@@ -796,5 +822,18 @@ if __name__ == "__main__":
             nargs='?',
             default=3600,
             help='')
+    parser.add_argument(
+            "-s", "--objectivesense",
+            type=str,
+            nargs='?',
+            default="min",
+            help='')
+
     args = parser.parse_args()
-    process(args.csv, args.benchmark, args.labels, args.filter, args.timelimit)
+
+    process(args.csv,
+            args.benchmark,
+            args.labels,
+            args.filter,
+            args.timelimit,
+            args.objectivesense)
