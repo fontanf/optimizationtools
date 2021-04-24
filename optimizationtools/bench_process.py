@@ -529,6 +529,8 @@ def process(
         for label in labels:
             average_gaps[label] = [(0, 0) for t in range(1000 + 1)]
             instance_gaps[label] = []
+        gap_min = 0
+        gap_max = 0
 
         rows_new = []
         for row in rows_filtered:
@@ -640,6 +642,8 @@ def process(
                 rows_new[-1][label + " / Average gap"] = area / 1001
                 rows_new[-1][label + " / Gap"] = gaps[-1]
                 instance_gaps[label].append(gaps[-1])
+                gap_min = min(gap_min, gaps[-1])
+                gap_max = max(gap_max, gaps[-1])
 
                 # Add plots
                 axs[0].plot(
@@ -751,7 +755,7 @@ def process(
                     label=label,
                     alpha=0.5)
 
-        axs.set_ylim([0, 1])
+        axs.set_ylim([gap_min, gap_max])
         axs.set_title("Gap")
         axs.set(xlabel='Instance')
         axs.set(ylabel='Gap')
@@ -763,8 +767,12 @@ def process(
                 rotation=45,
                 ha='right')
         axs.set_yticks([
-                0.01, 0.02, 0.03, 0.04, 0.05,
-                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+            y for y in [
+                -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1,
+                -0.05, -0.04, -0.03, -0.02, -0.01,
+                0.0, 0.01, 0.02, 0.03, 0.04, 0.05,
+                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+            if y > gap_min and y < gap_max])
 
         fig.tight_layout(pad=5.0)
         fig.savefig(graph_path + ".png", format="png")

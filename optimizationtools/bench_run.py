@@ -4,6 +4,7 @@ import csv
 
 
 def run(main_exec,
+        options,
         datacsv_path,
         label,
         algorithm,
@@ -42,6 +43,7 @@ def run(main_exec,
                 + (" " + row["Options"] if "Options" in row.keys() else "")
                 + (" -t " + str(time_limit) if time_limit is not None else "")
                 + (" -a \"" + algorithm + "\"" if algorithm is not None else "")
+                + " " + options
                 + " -c \"" + cert_path + "\""
                 + " -o \"" + output_path + "\"")
         print(command)
@@ -60,6 +62,12 @@ if __name__ == "__main__":
             "--main",
             type=str,
             default=os.path.join(".", "bazel-bin", "*", "main"),
+            help='')
+    parser.add_argument(
+            "-o",
+            "--options",
+            type=str,
+            default="",
             help='')
     parser.add_argument(
             "-c",
@@ -97,6 +105,7 @@ if __name__ == "__main__":
     if args.algorithms is None:
         label = args.labels[0] if args.labels is not None else args.main
         run(args.main,
+            args.options,
             args.csv,
             label,
             args.algorithms,
@@ -108,6 +117,7 @@ if __name__ == "__main__":
             algorithm = args.algorithms[i]
             label = args.labels[i] if args.labels is not None else algorithm
             run(args.main,
+                args.options,
                 args.csv,
                 label,
                 algorithm,
