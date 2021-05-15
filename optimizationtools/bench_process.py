@@ -16,6 +16,7 @@ def process(
         instance_filter,
         timelimit,
         objective_sense="min",
+        instance_plots=False,
         output_name=None):
 
     print("benchmark:", benchmark)
@@ -344,7 +345,13 @@ def process(
                     instance_gaps[label].append(1)
                     continue
                 if benchmark == "heuristicshort":
-                    v_curr = float(json_reader["Solution"]["Value"])
+                    v_curr_str = str(json_reader["Solution"]["Value"])
+                    if "," in v_curr_str:
+                        v_curr = float(v_curr_str.split(',')[0])
+                        if objective_sense != "min":
+                            v_curr = -v_curr
+                    else:
+                        v_curr = float(v_curr_str.split(' ')[0])
                     bksv = float(row["Best known solution value"])
                 else:
                     v_curr = float(json_reader["Bound"]["Value"])
@@ -541,20 +548,22 @@ def process(
                 objective_sense = row[objective_sense_field]
 
             # Initiialize instance plot.
-            fig, axs = plt.subplots(2)
-            fig.set_figheight(15)
-            fig.set_figwidth(30)
-            fig.suptitle(row["Dataset"] + " / " + row["Path"])
+            if instance_plots:
+                fig, axs = plt.subplots(2)
+                fig.set_figheight(15)
+                fig.set_figwidth(30)
+                fig.suptitle(row["Dataset"] + " / " + row["Path"])
 
             # Plot best known solution.
             if benchmark == "heuristiclong":
                 duals = [float(row["Best known solution value"])
                          for _ in range(1000 + 1)]
-                axs[0].plot(
-                        times, duals,
-                        drawstyle='steps',
-                        label="Best known solution value",
-                        alpha=0.5)
+                if instance_plots:
+                    axs[0].plot(
+                            times, duals,
+                            drawstyle='steps',
+                            label="Best known solution value",
+                            alpha=0.5)
 
             for label in labels:
                 # Read json output file.
@@ -586,7 +595,13 @@ def process(
                 primals = [None for _ in range(1000 + 1)]
                 k = 1
                 while "Solution" + str(k) in json_reader.keys():
-                    v_curr = float(str(json_reader["Solution" + str(k)]["Value"]).split(' ')[0])
+                    v_curr_str = str(json_reader["Solution" + str(k)]["Value"])
+                    if "," in v_curr_str:
+                        v_curr = float(v_curr_str.split(',')[0])
+                        if objective_sense != "min":
+                            v_curr = -v_curr
+                    else:
+                        v_curr = float(v_curr_str.split(' ')[0])
                     t_curr = float(json_reader["Solution" + str(k)]["Time"])
                     t_next = (
                             float(json_reader["Solution" + str(k + 1)]["Time"])
@@ -646,58 +661,60 @@ def process(
                 gap_max = max(gap_max, gaps[-1])
 
                 # Add plots
-                axs[0].plot(
-                        times, primals,
-                        drawstyle='steps',
-                        label=label + " / Primal",
-                        alpha=0.5)
-                if benchmark == "primaldual":
+                if instance_plots:
                     axs[0].plot(
-                            times, duals,
+                            times, primals,
                             drawstyle='steps',
-                            label=label + " / Dual",
+                            label=label + " / Primal",
                             alpha=0.5)
-                axs[1].plot(
-                        times, gaps,
-                        drawstyle='steps',
-                        label=label + " / Gap",
-                        alpha=0.5)
+                    if benchmark == "primaldual":
+                        axs[0].plot(
+                                times, duals,
+                                drawstyle='steps',
+                                label=label + " / Dual",
+                                alpha=0.5)
+                    axs[1].plot(
+                            times, gaps,
+                            drawstyle='steps',
+                            label=label + " / Gap",
+                            alpha=0.5)
 
             # Finish instance plot.
-            axs[0].set_xlim([0, timelimit])
-            axs[0].set_title("Bounds")
-            axs[0].set(xlabel='Time (s)')
-            axs[0].set(ylabel='Bounds')
-            axs[0].grid(True)
-            if objective_sense == "min":
-                axs[0].legend(loc='upper right')
-            else:
-                axs[0].legend(loc='lower right')
-            axs[1].set_xlim([0, timelimit])
-            axs[1].set_ylim([0, 1])
-            axs[1].set_title("Gap")
-            axs[1].set(xlabel='Time (s)')
-            axs[1].set(ylabel='Gap')
-            if objective_sense == "min":
-                axs[1].legend(loc='upper right')
-            else:
-                axs[1].legend(loc='lower right')
-            axs[1].set_yticks([
-                0.01, 0.02, 0.05,
-                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
-            axs[1].grid(True)
-            fig.tight_layout(pad=5.0)
-            graph_path = (
-                    "analysis"
-                    + "/" + benchmark + " - " + output_name
-                    + "/" + row["Dataset"]
-                    + "/" + row["Path"])
-            if not os.path.isdir(os.path.dirname(graph_path)):
-                os.makedirs(os.path.dirname(graph_path))
-            fig.savefig(graph_path + ".png", format="png")
-            fig.savefig(graph_path + ".svg", format="svg")
-            fig.clf()
-            plt.close(fig)
+            if instance_plots:
+                axs[0].set_xlim([0, timelimit])
+                axs[0].set_title("Bounds")
+                axs[0].set(xlabel='Time (s)')
+                axs[0].set(ylabel='Bounds')
+                axs[0].grid(True)
+                if objective_sense == "min":
+                    axs[0].legend(loc='upper right')
+                else:
+                    axs[0].legend(loc='lower right')
+                axs[1].set_xlim([0, timelimit])
+                axs[1].set_ylim([0, 1])
+                axs[1].set_title("Gap")
+                axs[1].set(xlabel='Time (s)')
+                axs[1].set(ylabel='Gap')
+                if objective_sense == "min":
+                    axs[1].legend(loc='upper right')
+                else:
+                    axs[1].legend(loc='lower right')
+                axs[1].set_yticks([
+                    0.01, 0.02, 0.05,
+                    0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+                axs[1].grid(True)
+                fig.tight_layout(pad=5.0)
+                graph_path = (
+                        "analysis"
+                        + "/" + benchmark + " - " + output_name
+                        + "/" + row["Dataset"]
+                        + "/" + row["Path"])
+                if not os.path.isdir(os.path.dirname(graph_path)):
+                    os.makedirs(os.path.dirname(graph_path))
+                fig.savefig(graph_path + ".png", format="png")
+                fig.savefig(graph_path + ".svg", format="svg")
+                fig.clf()
+                plt.close(fig)
 
         # Draw gap-time plot.
         graph_path = (
@@ -755,6 +772,8 @@ def process(
                     label=label,
                     alpha=0.5)
 
+        gap_min = min(gap_min, 0)
+        gap_max = max(gap_max, 0.01)
         axs.set_ylim([gap_min, gap_max])
         axs.set_title("Gap")
         axs.set(xlabel='Instance')
@@ -770,9 +789,12 @@ def process(
             y for y in [
                 -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1,
                 -0.05, -0.04, -0.03, -0.02, -0.01,
-                0.0, 0.01, 0.02, 0.03, 0.04, 0.05,
+                -0.005, -0.004, -0.003, -0.002, -0.001,
+                0.0, 0.001, 0.002, 0.003, 0.004, 0.005,
+                0.01, 0.02, 0.03, 0.04, 0.05,
                 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-            if y > gap_min and y < gap_max])
+            if y >= gap_min and y <= gap_max
+            and (y == 0 or 100 * abs(y) >= abs(gap_max) + abs(gap_min))])
 
         fig.tight_layout(pad=5.0)
         fig.savefig(graph_path + ".png", format="png")
@@ -836,6 +858,12 @@ if __name__ == "__main__":
             nargs='?',
             default="min",
             help='')
+    parser.add_argument(
+            "-p", "--instanceplots",
+            type=bool,
+            nargs='?',
+            default=False,
+            help='')
 
     args = parser.parse_args()
 
@@ -844,4 +872,5 @@ if __name__ == "__main__":
             args.labels,
             args.filter,
             args.timelimit,
-            args.objectivesense)
+            args.objectivesense,
+            args.instanceplots)
