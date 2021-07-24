@@ -49,7 +49,10 @@ public:
     inline bool add(Index index);
     inline bool remove(Index index);
     inline void clear() { element_number_ = 0; }
+    inline void fill() { element_number_ = elements_.size(); }
     inline void shuffle(std::mt19937_64& generator);
+    inline void shuffle_in(std::mt19937_64& generator);
+    inline void shuffle_out(std::mt19937_64& generator);
 
     inline bool check() const;
 
@@ -97,6 +100,20 @@ inline bool IndexedSet::remove(Index index)
     positions_[elements_[element_number_ - 1]] = element_number_ - 1;
     element_number_--;
     return true;
+}
+
+inline void IndexedSet::shuffle_in(std::mt19937_64& generator)
+{
+    std::shuffle(elements_.begin(), elements_.begin() + element_number_, generator);
+    for (Position position = 0; position < element_number_; ++position)
+        positions_[elements_[position]] = position;
+}
+
+inline void IndexedSet::shuffle_out(std::mt19937_64& generator)
+{
+    std::shuffle(elements_.begin() + element_number_, elements_.end(), generator);
+    for (Position position = element_number_; position < (Position)elements_.size(); ++position)
+        positions_[elements_[position]] = position;
 }
 
 inline void IndexedSet::shuffle(std::mt19937_64& generator)
