@@ -20,8 +20,8 @@ public:
     typedef int64_t Position;
     typedef std::function<Key (Index)> Function;
 
-    IndexedBinaryHeap(Index element_number): heap_(1), positions_(element_number + 1, -1) { }
-    IndexedBinaryHeap(Index element_number, Function get_key);
+    IndexedBinaryHeap(Index number_of_elements): heap_(1), positions_(number_of_elements + 1, -1) { }
+    IndexedBinaryHeap(Index number_of_elements, Function get_key);
     void clear();
     void reset(const IndexedSet& indexed_set, Function get_key);
     virtual ~IndexedBinaryHeap() { }
@@ -91,16 +91,16 @@ void IndexedBinaryHeap<Key>::percolate_down(Position position)
 }
 
 template <typename Key>
-IndexedBinaryHeap<Key>::IndexedBinaryHeap(Index element_number, Function get_key):
-    heap_(element_number + 1),
-    positions_(element_number + 1)
+IndexedBinaryHeap<Key>::IndexedBinaryHeap(Index number_of_elements, Function get_key):
+    heap_(number_of_elements + 1),
+    positions_(number_of_elements + 1)
 {
-    for (Index index = 0; index < element_number; ++index) {
+    for (Index index = 0; index < number_of_elements; ++index) {
         heap_[index + 1] = {index, get_key(index)};
         positions_[index] = index + 1;
     }
 
-    for (Position position = element_number; position >= 1; --position)
+    for (Position position = number_of_elements; position >= 1; --position)
         percolate_down(position);
 }
 

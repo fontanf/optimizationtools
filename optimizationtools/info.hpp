@@ -23,9 +23,9 @@
     }
 
 #define PUT(info, cat, key, value) \
-    info.output->mutex_j.lock(); \
+    info.output->mutex_json.lock(); \
     info.output->j[cat][key] = value; \
-    info.output->mutex_j.unlock();
+    info.output->mutex_json.unlock();
 
 #ifdef NDEBUG
 
@@ -42,9 +42,9 @@
 #define DBG(x) x
 #define LOG(info, message) \
     { \
-        if (info.logger->on && info.logger->level <= info.logger->level_max) { \
-            if (info.logger->logfile.is_open()) \
-                info.logger->logfile << message; \
+        if (info.logger->on && info.logger->level <= info.logger->maximum_log_level) { \
+            if (info.logger->log_file.is_open()) \
+                info.logger->log_file << message; \
             if (info.logger->log2stderr) \
                 std::cerr << message; \
         } \
@@ -79,24 +79,24 @@ struct Logger
 {
     bool on = true;
     bool log2stderr = false;
-    std::ofstream logfile;
-    std::string logfilename;
+    std::ofstream log_file;
+    std::string log_path;
     int level = 0;
-    int level_max = 999;
+    int maximum_log_level = 999;
 };
 
 struct Output
 {
     nlohmann::json j;
-    bool onlywriteattheend = true;
-    std::string inifile  = "";
-    std::string certfile = "";
-    std::mutex mutex_j;
+    bool only_write_at_the_end = true;
+    std::string json_output_path  = "";
+    std::string certificate_path = "";
+    std::mutex mutex_json;
     std::mutex mutex_cout;
-    std::mutex mutex_sol;
+    std::mutex mutex_solutions;
     bool verbose = false;
-    int sol_number = 0;
-    int bnd_number = 0;
+    int number_of_solutions = 0;
+    int number_of_bounds = 0;
 };
 
 struct Info
@@ -112,20 +112,20 @@ public:
     }
 
     Info& set_verbose(bool verbose) { output->verbose = verbose; return *this; }
-    Info& set_outputfile(std::string outputfile) { output->inifile = outputfile; return *this; }
-    Info& set_certfile(std::string certfile) { output->certfile = certfile; return *this; }
-    Info& set_onlywriteattheend(bool b) { output->onlywriteattheend = b; return *this; }
+    Info& set_json_output_path(std::string outputfile) { output->json_output_path = outputfile; return *this; }
+    Info& set_certificate_path(std::string certfile) { output->certificate_path = certfile; return *this; }
+    Info& set_only_write_at_the_end(bool b) { output->only_write_at_the_end = b; return *this; }
     Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
-    Info& set_loglevelmax(int loglevelmax) { logger->level_max = loglevelmax; return *this; }
-    Info& set_timelimit(double t) { timelimit = t; return *this; }
-    Info& set_logfile(std::string logfile)
+    Info& set_maximum_log_level(int maximum_log_level) { logger->maximum_log_level = maximum_log_level; return *this; }
+    Info& set_time_limit(double t) { time_limit = t; return *this; }
+    Info& set_log_path(std::string log_path)
     {
-        logger->logfilename = logfile;
-        if (logfile == "")
+        logger->log_path = log_path;
+        if (log_path == "")
             return *this;
-        if (logger->logfile.is_open())
-            logger->logfile.close();
-        logger->logfile.open(logfile);
+        if (logger->log_file.is_open())
+            logger->log_file.close();
+        logger->log_file.open(log_path);
         return *this;
     }
 
@@ -134,22 +134,22 @@ public:
         if (keep_logger == "") {
             logger = std::shared_ptr<Logger>(info.logger);
         } else {
-            std::string logfile = info.logger->logfilename;
-            if (logfile != "") {
-                for (int i=logfile.length()-1; i>=0; --i) {
-                    if (logfile[i] == '.') {
-                        logfile.insert(i, "_" + keep_logger);
+            std::string log_file = info.logger->log_path;
+            if (log_file != "") {
+                for (int i=log_file.length()-1; i>=0; --i) {
+                    if (log_file[i] == '.') {
+                        log_file.insert(i, "_" + keep_logger);
                         break;
                     }
                 }
             }
             logger = std::shared_ptr<Logger>(new Logger());
-            set_logfile(logfile);
+            set_log_path(log_file);
         }
         output = (!keep_output)? std::shared_ptr<Output>(new Output()):
                                  std::shared_ptr<Output>(info.output);
         start = info.start;
-        timelimit = info.timelimit;
+        time_limit = info.time_limit;
     }
 
     double elapsed_time() const
@@ -161,18 +161,18 @@ public:
         return time_span.count();
     }
 
-    double remaining_time() const { return std::max(0.0, timelimit - elapsed_time()); }
-    bool check_time() const { return elapsed_time() <= timelimit; }
+    double remaining_time() const { return std::max(0.0, time_limit - elapsed_time()); }
+    bool check_time() const { return elapsed_time() <= time_limit; }
     void reset_time() { start = std::chrono::high_resolution_clock::now(); }
 
-    void write_ini() const { write_ini(output->inifile); }
-    void write_ini(std::string filename) const
+    void write_json_output() const { write_json_output(output->json_output_path); }
+    void write_json_output(std::string filename) const
     {
         if (filename != "") {
-            output->mutex_j.lock();
+            output->mutex_json.lock();
             std::ofstream o(filename);
             o << std::setw(4) << output->j << std::endl;
-            output->mutex_j.unlock();
+            output->mutex_json.unlock();
         }
     }
 
@@ -183,7 +183,7 @@ public:
     std::shared_ptr<Logger> logger = NULL;
     std::shared_ptr<Output> output = NULL;
     std::chrono::high_resolution_clock::time_point start;
-    double timelimit = std::numeric_limits<double>::infinity();
+    double time_limit = std::numeric_limits<double>::infinity();
 };
 
 }

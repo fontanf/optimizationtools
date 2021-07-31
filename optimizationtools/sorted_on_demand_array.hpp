@@ -30,7 +30,7 @@ public:
     SortedOnDemandArray() { }
     virtual ~SortedOnDemandArray() { }
 
-    void reset(ElementId element_number);
+    void reset(ElementId number_of_elements);
 
     void set_cost(ElementId id, Cost cost) { elements_[id].cost = cost; }
 
@@ -49,14 +49,14 @@ private:
 
 };
 
-void SortedOnDemandArray::reset(ElementId element_number)
+void SortedOnDemandArray::reset(ElementId number_of_elements)
 {
     elements_.clear();
-    elements_.resize(element_number);
-    for (Position position = 0; position < element_number; ++position) {
+    elements_.resize(number_of_elements);
+    for (Position position = 0; position < number_of_elements; ++position) {
         elements_[position].id = position;
         elements_[position].interval_start = 0;
-        elements_[position].interval_end   = element_number - 1;
+        elements_[position].interval_end   = number_of_elements - 1;
     }
 }
 

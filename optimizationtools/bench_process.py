@@ -96,12 +96,12 @@ def process(
             total_time[label] = 0
             instance_times[label] = []
 
-        instance_number = 0
+        number_of_instances = 0
         rows_new = []
         for row in rows_filtered:
             print(row["Dataset"] + "/" + row["Path"])
             rows_new.append(row)
-            instance_number += 1
+            number_of_instances += 1
 
             if objective_sense_field in row:
                 objective_sense = row[objective_sense_field]
@@ -206,10 +206,10 @@ def process(
                     drawstyle='steps',
                     label=label,
                     alpha=0.5)
-        axs.hlines(instance_number, 0, timelimit, label="Instance number")
+        axs.hlines(number_of_instances, 0, timelimit, label="Instance number")
 
         axs.set_xlim([0, timelimit])
-        axs.set_ylim([0, instance_number * 1.1])
+        axs.set_ylim([0, number_of_instances * 1.1])
         axs.set_title("Number of instances solved")
         axs.set(xlabel='Time (s)')
         axs.set(ylabel='Number of instances solved')
@@ -266,7 +266,7 @@ def process(
         rows_new.append({})
         for label in labels:
             rows_new[-1][label + " / Time"] \
-                    = total_time[label] / instance_number
+                    = total_time[label] / number_of_instances
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
@@ -291,12 +291,12 @@ def process(
             instance_times[label] = []
             instance_gaps[label] = []
 
-        instance_number = 0
+        number_of_instances = 0
         rows_new = []
         for row in rows_filtered:
             print(row["Dataset"] + "/" + row["Path"])
             rows_new.append(row)
-            instance_number += 1
+            number_of_instances += 1
 
             if objective_sense_field in row:
                 objective_sense = row[objective_sense_field]
@@ -404,11 +404,11 @@ def process(
                     drawstyle='steps',
                     label=label,
                     alpha=0.5)
-        axs[0].hlines(instance_number, 0, timelimit, label="Instance number")
-        axs[1].hlines(instance_number, 0, 1, label="Instance number")
+        axs[0].hlines(number_of_instances, 0, timelimit, label="Instance number")
+        axs[1].hlines(number_of_instances, 0, 1, label="Instance number")
 
         axs[0].set_xlim([0, timelimit])
-        axs[0].set_ylim([0, instance_number * 1.1])
+        axs[0].set_ylim([0, number_of_instances * 1.1])
         axs[0].set(xlabel='Time (s)')
         if benchmark == "heuristicshort":
             axs[0].set_title(
@@ -428,7 +428,7 @@ def process(
         axs[0].legend(loc='lower right')
 
         axs[1].set_xlim([0, 1])
-        axs[1].set_ylim([0, instance_number * 1.1])
+        axs[1].set_ylim([0, number_of_instances * 1.1])
         axs[1].set(xlabel='Gap')
         if benchmark == "heuristicshort":
             axs[1].set_title(
@@ -518,9 +518,9 @@ def process(
         rows_new.append({})
         for label in labels:
             rows_new[-1][label + " / Time"] \
-                    = total_time[label] / instance_number
+                    = total_time[label] / number_of_instances
             rows_new[-1][label + " / Gap"] \
-                    = total_gap[label] / instance_number * 100
+                    = total_gap[label] / number_of_instances * 100
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()

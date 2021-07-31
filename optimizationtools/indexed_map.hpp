@@ -16,21 +16,21 @@ public:
     typedef int64_t Position;
     typedef typename std::vector<std::pair<Index, Value>>::const_iterator const_iterator;
 
-    inline IndexedMap(Index element_number, Value null_value);
+    inline IndexedMap(Index number_of_elements, Value null_value);
     inline virtual ~IndexedMap() { }
 
-    inline bool empty() const { return element_number_ == 0; }
-    inline Position size() const { return element_number_; }
-    inline bool contains(Index index) const { return (positions_[index] < element_number_); }
+    inline bool empty() const { return number_of_elements_ == 0; }
+    inline Position size() const { return number_of_elements_; }
+    inline bool contains(Index index) const { return (positions_[index] < number_of_elements_); }
     inline Value operator[](Index index) const { return ((contains(index))? elements_[positions_[index]].second: null_value_); }
 
     inline const_iterator begin() const { return elements_.begin(); }
-    inline const_iterator end() const { return elements_.begin() + element_number_; }
-    inline const_iterator out_begin() const { return elements_.begin() + element_number_; }
+    inline const_iterator end() const { return elements_.begin() + number_of_elements_; }
+    inline const_iterator out_begin() const { return elements_.begin() + number_of_elements_; }
     inline const_iterator out_end() const { return elements_.end(); }
 
     inline void set(Index index, Value value);
-    inline void clear() { element_number_ = 0; };
+    inline void clear() { number_of_elements_ = 0; };
 
     inline bool check() const;
 
@@ -38,7 +38,7 @@ private:
 
     std::vector<std::pair<Index, Value>> elements_;
     std::vector<Position> positions_;
-    Position element_number_ = 0;
+    Position number_of_elements_ = 0;
     Value null_value_;
 
 };
@@ -46,12 +46,12 @@ private:
 /******************************************************************************/
 
 template <typename Value>
-IndexedMap<Value>::IndexedMap(Index element_number, Value null_value):
-    elements_(element_number),
-    positions_(element_number),
+IndexedMap<Value>::IndexedMap(Index number_of_elements, Value null_value):
+    elements_(number_of_elements),
+    positions_(number_of_elements),
     null_value_(null_value)
 {
-    for (Index index = 0; index < element_number; ++index) {
+    for (Index index = 0; index < number_of_elements; ++index) {
         elements_[index] = {index, null_value};
         positions_[index] = index;
     }
@@ -62,22 +62,22 @@ inline void IndexedMap<Value>::set(Index index, Value value)
 {
     Position position = positions_[index];
     if (value == null_value_) { // remove
-        if (position < element_number_) {
-            elements_[position] = elements_[element_number_ - 1];
-            elements_[element_number_ - 1] = {index, null_value_};
+        if (position < number_of_elements_) {
+            elements_[position] = elements_[number_of_elements_ - 1];
+            elements_[number_of_elements_ - 1] = {index, null_value_};
             positions_[elements_[position].first] = position;
-            positions_[elements_[element_number_ - 1].first] = element_number_ - 1;
-            element_number_--;
+            positions_[elements_[number_of_elements_ - 1].first] = number_of_elements_ - 1;
+            number_of_elements_--;
         }
     } else { // add
-        if (position < element_number_) {
+        if (position < number_of_elements_) {
             elements_[position].second = value;
         } else {
-            elements_[position] = elements_[element_number_];
-            elements_[element_number_] = {index, value};
+            elements_[position] = elements_[number_of_elements_];
+            elements_[number_of_elements_] = {index, value};
             positions_[elements_[position].first] = position;
-            positions_[elements_[element_number_].first] = element_number_;
-            element_number_++;
+            positions_[elements_[number_of_elements_].first] = number_of_elements_;
+            number_of_elements_++;
         }
     }
 }
