@@ -1,7 +1,7 @@
 cc_library(
         name = "info",
         hdrs = ["info.hpp"],
-        srcs = [ ],
+        srcs = ["info.cpp"],
         visibility = ["//visibility:public"],
         deps = ["@json//:json"],
 )
