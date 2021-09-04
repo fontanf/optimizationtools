@@ -127,6 +127,14 @@ namespace optimizationtools
  * - Reset the starting time:
  *     info.reset_time();
  *
+ * SIGINT handler:
+ * - Enable SIGINT handler:
+ *     info.set_sigint_handler()
+ * - Check if the program has received SIGINT signal:
+ *     info.terminated_by_sigint()
+ * - Check SIGINT and time limit:
+ *     info.needs_to_end()
+ *
  * Example of function to update an incumbent solution:
 
 void update_solution(
