@@ -10,11 +10,6 @@
 
 #include <nlohmann/json.hpp>
 
-/**
- * Logger is not thread safe, each thread should have its own Logger.
- * Output is thread safe, it should be shared between threads.
- */
-
 #define VER(info, message) \
     if (info.output->verbose) { \
         info.output->mutex_cout.lock(); \
@@ -22,9 +17,9 @@
         info.output->mutex_cout.unlock(); \
     }
 
-#define PUT(info, cat, key, value) \
+#define PUT(info, category, key, value) \
     info.output->mutex_json.lock(); \
-    info.output->j[cat][key] = value; \
+    info.output->j[category][key] = value; \
     info.output->mutex_json.unlock();
 
 #ifdef NDEBUG
@@ -75,35 +70,155 @@
 namespace optimizationtools
 {
 
-struct Logger
-{
-    bool on = true;
-    bool log2stderr = false;
-    std::ofstream log_file;
-    std::string log_path;
-    int level = 0;
-    int maximum_log_level = 999;
-};
+/**
+ * Structure passed as argument of optimization algorithms which simplifies
+ * several aspects of the implementation.
+ *
+ * It is designed such that the user can use a default value:
+ *     algorithm(Instance instance, Info info = Info());
+ *
+ * Thus, this works:
+ *     algorithm(instance);
+ * as well as:
+ *     Info info = Info().set_time_limit(60);
+ *     algorithm(instance, info);
+ *
+ * Verbosity features:
+ * - Enable verbosity:
+ *     info.set_verbose(true);
+ * - Write something on the standard output (thread safe):
+ *     VER(info, "Print " << message);
+ *
+ * Certificate path features:
+ * - Set the path of the certificate file:
+ *     info.set_certificate_path("certificate_path");
+ *
+ * JSON output features:
+ * - Set the path of the JSON output file:
+ *     info.set_json_output_path("json_output_path");
+ * - Write something in the JSON output file (thread safe):
+ *     PUT(info, "category", "key", value);
+ *
+ * Logging features:
+ * - When compiling with NODEBUG, loggin is disabled and no line related to the
+ *   logging is kept in the final executable.
+ * - Set the path of the log file:
+ *     info.set_log_path("log_path");
+ * - Also write the log to the standard error output:
+ *     info.set_log2stderr(true);
+ * - Disable/enable logging (enabled by default):
+ *     LOG_OFF(info);
+ *     LOG_ON(info);
+ * - Write some logging information:
+ *     LOG(info, "I want to log " << message << std::endl);
+ * - Start a new fold:
+ *     LOG_FOLD_START(info, "new fold" << std::endl);
+ * - End the current fold:
+ *     LOG_FOLD_END(info, "new fold");
+ *
+ * Time limit features:
+ * - Set the time limit (in seconds) of the algorithm:
+ *     info.set_time_limit(60);
+ * - Check if the time limit has been reached:
+ *     info.check_time();
+ * - Get the elapsed time:
+ *     info.elapsed_time();
+ * - Get the remaining time:
+ *     info.remaining_time();
+ * - Reset the starting time:
+ *     info.reset_time();
+ *
+ * Example of function to update an incumbent solution:
 
-struct Output
+void update_solution(
+        Solution& incumbent_solution,
+        const Solution& new_solution,
+        optimizationtools::Info& info)
 {
-    nlohmann::json j;
-    bool only_write_at_the_end = true;
-    std::string json_output_path  = "";
-    std::string certificate_path = "";
-    std::mutex mutex_json;
-    std::mutex mutex_cout;
-    std::mutex mutex_solutions;
-    bool verbose = false;
-    int number_of_solutions = 0;
-    int number_of_bounds = 0;
-};
+    info.output->mutex_solutions.lock();
 
+    if (incumbent_solution is worse than new_solution) {
+        incumbent_solution = new_solution;
+
+        info.output->number_of_solutions++;
+        double t = round(info.elapsed_time() * 10000) / 10000;
+        VER(info,
+                "Time: " << t
+                << "; New solution with value: " << incumbent_solution.value()
+                << std::endl);
+        std::string sol_str = "Solution" + std::to_string(info.output->number_of_solutions);
+        PUT(info, sol_str, "Value", incumbent_solution.value());
+        PUT(info, sol_str, "Time", t);
+        if (!info.output->only_write_at_the_end) {
+            info.write_json_output();
+            solution.write(info.output->certificate_path);
+        }
+    }
+
+    info.output->mutex_solutions.unlock();
+}
+
+ */
 struct Info
 {
 
 public:
 
+    /**
+     * Logger structure.
+     */
+    struct Logger
+    {
+        /** Enable logging. */
+        bool on = true;
+        /** Enable writing logs to standard error output. */
+        bool log2stderr = false;
+        /** Log file. */
+        std::ofstream log_file;
+        /** Path to the log file. */
+        std::string log_path;
+        /** Current level of the logs. */
+        int level = 0;
+        /** Maximum level of the logs. */
+        int maximum_log_level = 999;
+    };
+
+    /**
+     * Output structure.
+     *
+     * It stores everything related to the certificate file and the the JSON output
+     * file.
+     */
+    struct Output
+    {
+        /** JSON output file. */
+        nlohmann::json j;
+        /** Only write outputs at the end of the algorithm. */
+        bool only_write_at_the_end = true;
+        /** Path to the JSON output file. */
+        std::string json_output_path  = "";
+        /** Path to the certificate file. */
+        std::string certificate_path = "";
+        /** Mutex to access the JSON output. */
+        std::mutex mutex_json;
+        /** Mutex to access the standard output. */
+        std::mutex mutex_cout;
+        /** Mutex to manipulate solutions. */
+        std::mutex mutex_solutions;
+        /** Verbosity. */
+        bool verbose = false;
+        /** Counter for the number of solutions. */
+        int number_of_solutions = 0;
+        /** Counter for the number of bounds. */
+        int number_of_bounds = 0;
+    };
+
+
+    /*
+     * Constructors and destructors.
+     */
+
+    /** Constructor. */
     Info()
     {
         logger = std::shared_ptr<Logger>(new Logger());
@@ -111,29 +226,25 @@ public:
         start = std::chrono::high_resolution_clock::now();
     }
 
-    Info& set_verbose(bool verbose) { output->verbose = verbose; return *this; }
-    Info& set_json_output_path(std::string outputfile) { output->json_output_path = outputfile; return *this; }
-    Info& set_certificate_path(std::string certfile) { output->certificate_path = certfile; return *this; }
-    Info& set_only_write_at_the_end(bool b) { output->only_write_at_the_end = b; return *this; }
-    Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
-    Info& set_maximum_log_level(int maximum_log_level) { logger->maximum_log_level = maximum_log_level; return *this; }
-    Info& set_time_limit(double t) { time_limit = t; return *this; }
-    Info& set_log_path(std::string log_path)
-    {
-        logger->log_path = log_path;
-        if (log_path == "")
-            return *this;
-        if (logger->log_file.is_open())
-            logger->log_file.close();
-        logger->log_file.open(log_path);
-        return *this;
-    }
-
+    /**
+     * Copy an existing Info structure.
+     *
+     * This is meant to be used in parallel algorithms.
+     *
+     * Keep the Output structure iff 'keep_output == true'.
+     *
+     * Keep the Logging structure iff 'keep_logger == ""'.  Otherwise, create a
+     * new Logger structure with 'logger_string' append to the log path (before
+     * the extension).
+     *
+     * Note that Info(info, false, "newthread") keeps the time limit.
+     */
     Info(const Info& info, bool keep_output, std::string keep_logger)
     {
         if (keep_logger == "") {
             logger = std::shared_ptr<Logger>(info.logger);
         } else {
+            // Insert 'keep_logger' string before the extension.
             std::string log_file = info.logger->log_path;
             if (log_file != "") {
                 for (int i=log_file.length()-1; i>=0; --i) {
@@ -152,6 +263,50 @@ public:
         time_limit = info.time_limit;
     }
 
+
+    /*
+     * Set options.
+     */
+
+    /** Enable verbosity. */
+    Info& set_verbose(bool verbose) { output->verbose = verbose; return *this; }
+
+    /** Set JSON output path. */
+    Info& set_json_output_path(std::string outputfile) { output->json_output_path = outputfile; return *this; }
+
+    /** Set certificate path. */
+    Info& set_certificate_path(std::string certfile) { output->certificate_path = certfile; return *this; }
+
+    /** Only write the output files at the end of the algorithm. */
+    Info& set_only_write_at_the_end(bool b) { output->only_write_at_the_end = b; return *this; }
+
+    /** Enable logs to standard error output. */
+    Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
+
+    /** Set a maximum level for the logs. */
+    Info& set_maximum_log_level(int maximum_log_level) { logger->maximum_log_level = maximum_log_level; return *this; }
+
+    /** Set the time limit of the algorithm. */
+    Info& set_time_limit(double t) { time_limit = t; return *this; }
+
+    /** Set the path of the log file. */
+    Info& set_log_path(std::string log_path)
+    {
+        logger->log_path = log_path;
+        if (log_path == "")
+            return *this;
+        if (logger->log_file.is_open())
+            logger->log_file.close();
+        logger->log_file.open(log_path);
+        return *this;
+    }
+
+
+    /*
+     * Time.
+     */
+
+    /** Get the elapsed time since the start of the algorithm. */
     double elapsed_time() const
     {
         std::chrono::high_resolution_clock::time_point end
@@ -161,29 +316,54 @@ public:
         return time_span.count();
     }
 
+    /** Get the remaining time before reaching the time limit. */
     double remaining_time() const { return std::max(0.0, time_limit - elapsed_time()); }
+
+    /** Return 'true' iff the time limit has not been reached yet. */
     bool check_time() const { return elapsed_time() <= time_limit; }
+
+    /** Reset the starting time of the algorithm. */
     void reset_time() { start = std::chrono::high_resolution_clock::now(); }
 
-    void write_json_output() const { write_json_output(output->json_output_path); }
-    void write_json_output(std::string filename) const
+
+    /*
+     * JSON output.
+     */
+
+    /** Write the JSON output file. */
+    void write_json_output(std::string json_output_path) const
     {
-        if (filename != "") {
+        if (json_output_path != "") {
             output->mutex_json.lock();
-            std::ofstream o(filename);
-            o << std::setw(4) << output->j << std::endl;
+            std::ofstream file(json_output_path);
+            if (!file.good())
+                throw std::runtime_error(
+                        "Unable to open file \"" + json_output_path + "\".");
+            file << std::setw(4) << output->j << std::endl;
             output->mutex_json.unlock();
         }
     }
 
-    /**
+    /** Write the JSON output file. */
+    void write_json_output() const { write_json_output(output->json_output_path); }
+
+
+    /*
      * Attributes
      */
 
+    /** Pointer to the logger. */
     std::shared_ptr<Logger> logger = NULL;
+
+    /** Pointer to the output structure. */
     std::shared_ptr<Output> output = NULL;
+
+    /** Start time of the algorithm. */
     std::chrono::high_resolution_clock::time_point start;
+
+    /** Time limit of the algorithm. */
     double time_limit = std::numeric_limits<double>::infinity();
+
 };
 
 }
