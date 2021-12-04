@@ -38,11 +38,11 @@ def run(main_exec,
                 main_exec
                 + " -v"
                 + " -i \"" + instance_path + "\""
-                + (" -p " + row["Problem"] if "Problem" in row.keys() else "")
                 + (" -f " + row["Format"] if "Format" in row.keys() else "")
                 + (" " + row["Options"] if "Options" in row.keys() else "")
                 + (" -t " + str(time_limit) if time_limit is not None else "")
-                + (" -a \"" + algorithm + "\"" if algorithm is not None else "")
+                + (" -a \"" + algorithm + "\""
+                   if algorithm is not None else "")
                 + " " + options
                 + " -c \"" + cert_path + "\""
                 + " -o \"" + output_path + "\"")
