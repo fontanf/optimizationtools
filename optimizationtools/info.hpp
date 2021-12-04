@@ -21,6 +21,8 @@
     info.output->j[category][key] = value; \
     info.output->mutex_json.unlock();
 
+#define COMMA ,
+
 #ifdef NDEBUG
 
 #define DBG(x)
