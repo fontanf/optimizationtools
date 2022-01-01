@@ -27,6 +27,7 @@ def run(main_exec,
                 directory_out, row["Dataset"], row["Path"] + ".json")
         cert_path = os.path.join(
                 directory_out, row["Dataset"], row["Path"] + "_solution.txt")
+        cutoff = row["Best known bound"]
         if not os.path.exists(os.path.dirname(output_path)):
             os.makedirs(os.path.dirname(output_path))
         if os.path.exists(instance_path + ".lz4"):
@@ -40,6 +41,7 @@ def run(main_exec,
                 + " -i \"" + instance_path + "\""
                 + (" -f " + row["Format"] if "Format" in row.keys() else "")
                 + (" " + row["Options"] if "Options" in row.keys() else "")
+                + (" --cutoff \"" + cutoff + "\"" if cutoff != "" else "")
                 + (" -t " + str(time_limit) if time_limit is not None else "")
                 + (" -a \"" + algorithm + "\""
                    if algorithm is not None else "")

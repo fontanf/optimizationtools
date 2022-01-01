@@ -7,6 +7,7 @@ import math
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt  # noqa: E402
+import datetime
 
 
 def process(
@@ -29,15 +30,10 @@ def process(
     with open(datacsv_path, "r") as f:
         reader = csv.reader(f)
         fieldnames = next(reader)
+    date = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M")
     if output_name is None:
-        label_string = " VS ".join([str(label) for label in labels])
-        label_string = label_string.replace("/", "_")
-        if len(label_string) > 64:
-            label_string = str(hash(label_string))
-        filter_string = instance_filter
-        if len(filter_string) > 64:
-            filter_string = str(hash(filter_string))
-        output_name = label_string + " - " + filter_string
+        output_name = " ".join([str(label) for label in labels])
+        output_name = output_name.replace("/", "_")
 
     if benchmark == "times":
         rows_new = []
@@ -76,7 +72,7 @@ def process(
         # Write filter csv file.
         csv_path = (
                 "analysis"
-                + "/times - " + output_name + ".csv")
+                + "/" + date + " - times - " + output_name + ".csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         with open(csv_path, 'w') as csv_file:
@@ -192,7 +188,7 @@ def process(
         # Draw solved-time plot.
         graph_path = (
                 "analysis"
-                + "/exact - " + output_name + " - solved-time")
+                + "/" + date + " - exact - " + output_name + " - solved-time")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -225,7 +221,7 @@ def process(
         # Draw time-instance plot.
         graph_path = (
                 "analysis"
-                + "/exact - " + output_name + " - time-instance")
+                + "/" + date + " - exact - " + output_name + " - time-instance")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -260,7 +256,7 @@ def process(
         # Write filter csv file.
         csv_path = (
                 "analysis"
-                + "/exact - " + output_name + ".csv")
+                + "/" + date + " - exact - " + output_name + ".csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
@@ -382,7 +378,7 @@ def process(
         # Draw solved-time and solved-gap plot.
         graph_path = (
                 "analysis"
-                + "/" + benchmark + " - " + output_name
+                + "/" + date + " - " + benchmark + " - " + output_name
                 + " - solved-time sovled-gap")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
@@ -456,7 +452,7 @@ def process(
         # Draw time-instance and gap-instance plot.
         graph_path = (
                 "analysis"
-                + "/" + benchmark + " - " + output_name
+                + "/" + date + " - " + benchmark + " - " + output_name
                 + " - time-instance gap-instance")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
@@ -512,7 +508,8 @@ def process(
         # Write filter csv file.
         csv_path = (
                 "analysis"
-                + "/" + benchmark + " - " + output_name + ".csv")
+                + "/" + date + " - " + benchmark + " - " + output_name
+                + ".csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
@@ -706,7 +703,7 @@ def process(
                 fig.tight_layout(pad=5.0)
                 graph_path = (
                         "analysis"
-                        + "/" + benchmark + " - " + output_name
+                        + "/" + date + " - " + benchmark + " - " + output_name
                         + "/" + row["Dataset"]
                         + "/" + row["Path"])
                 if not os.path.isdir(os.path.dirname(graph_path)):
@@ -719,7 +716,8 @@ def process(
         # Draw gap-time plot.
         graph_path = (
                 "analysis"
-                + "/" + benchmark + " - " + output_name + " - gap-time")
+                + "/" + date + " - " + benchmark + " - " + output_name
+                + " - gap-time")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -757,7 +755,8 @@ def process(
         # Draw gap-instance plot.
         graph_path = (
                 "analysis"
-                + "/" + benchmark + " - " + output_name + " - gap-instance")
+                + "/" + date + " - " + benchmark + " - " + output_name
+                + " - gap-instance")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -805,7 +804,8 @@ def process(
         # Write filter csv file.
         csv_path = (
                 "analysis"
-                + "/" + benchmark + " - " + output_name + ".csv")
+                + "/" + date + " - " + benchmark + " - " + output_name
+                + ".csv")
         if not os.path.isdir(os.path.dirname(csv_path)):
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
