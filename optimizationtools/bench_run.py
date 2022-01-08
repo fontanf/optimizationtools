@@ -1,6 +1,9 @@
 import os
 import argparse
 import csv
+import json
+import datetime
+import shutil
 
 
 def run(main_exec,
@@ -10,7 +13,8 @@ def run(main_exec,
         algorithm,
         instance_filter,
         time_limit,
-        time_limit_field=None):
+        time_limit_field=None,
+        objective_sense="min"):
 
     directory_in = os.path.dirname(datacsv_path)
     reader = csv.DictReader(open(datacsv_path))
@@ -20,16 +24,19 @@ def run(main_exec,
     if not os.path.exists(directory_out):
         os.makedirs(directory_out)
 
+    new_bks = {}
+    new_bkb = {}
+
     for row in rows_filtered:
         instance_path = os.path.join(
                 directory_in, row["Path"])
-        output_path = os.path.join(
+        json_output_path = os.path.join(
                 directory_out, row["Dataset"], row["Path"] + ".json")
-        cert_path = os.path.join(
+        certificate_path = os.path.join(
                 directory_out, row["Dataset"], row["Path"] + "_solution.txt")
         cutoff = row["Best known bound"]
-        if not os.path.exists(os.path.dirname(output_path)):
-            os.makedirs(os.path.dirname(output_path))
+        if not os.path.exists(os.path.dirname(json_output_path)):
+            os.makedirs(os.path.dirname(json_output_path))
         if os.path.exists(instance_path + ".lz4"):
             os.system("lz4 \"" + instance_path + ".lz4\"")
         if time_limit_field is not None:
@@ -46,14 +53,132 @@ def run(main_exec,
                 + (" -a \"" + algorithm + "\""
                    if algorithm is not None else "")
                 + " " + options
-                + " -c \"" + cert_path + "\""
-                + " -o \"" + output_path + "\"")
+                + " -c \"" + certificate_path + "\""
+                + " -o \"" + json_output_path + "\"")
         print(command)
         os.system(command)
         print()
 
         if os.path.exists(instance_path + ".lz4"):
             os.remove(instance_path)
+
+        if "Objective sense" in row:
+            objective_sense = row["Objective sense"]
+
+        json_file = open(json_output_path, "r")
+        json_reader = json.load(json_file)
+        p = (row["Dataset"], row["Path"])
+
+        # Update best known solution.
+        if "Solution" in json_reader:
+            primal_str = json_reader["Solution"]["Value"]
+            if "," in primal_str:
+                primal = float(primal_str.split(',')[0])
+                if objective_sense != "min":
+                    primal = -primal
+            else:
+                primal = float(primal_str.split(' ')[0])
+
+            bksv = None
+            if "Best known solution value" in row:
+                bksv = float(row["Best known solution value"])
+
+            current_certificate_path = None
+            if "Certificate path" in row:
+                current_certificate_path = row["Certificate path"]
+
+            update = False
+            if bksv is None:
+                update = True
+            elif primal == bksv and current_certificate_path is None:
+                update = True
+            elif objective_sense == "min" and primal < bksv:
+                update = True
+            elif objective_sense != "min" and primal > bksv:
+                update = True
+
+            if update:
+                new_bks[p] = (primal, certificate_path)
+
+        # Update best known bound.
+        if "Bound" in json_reader:
+
+            dual = float(json_reader["Bound"]["Value"])
+
+            bkb = None
+            if "Best known bound" in row:
+                bkb = float(row["Best known bound"])
+
+            update = False
+            if bkb is None:
+                update = True
+            elif objective_sense == "min" and dual > bkb:
+                update = True
+            elif objective_sense != "min" and dual < bkb:
+                update = True
+
+            if update:
+                new_bkb[p] = dual
+
+    if len(new_bks) > 0 or len(new_bks) > 0:
+        date = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M")
+        datacsv_path_back = datacsv_path + "_back_" + date
+        shutil.copyfile(datacsv_path, datacsv_path_back)
+        # Compute fieldnames.
+        with open(datacsv_path_back) as f_in:
+            csv_reader = csv.reader(f_in)
+            fieldnames = next(csv_reader)
+            if "Best known solution value" not in fieldnames:
+                fieldnames.append("Best known solution value")
+            if "Best known bound" not in fieldnames:
+                fieldnames.append("Best known bound")
+            if "Certificate path" not in fieldnames:
+                fieldnames.append("Certificate path")
+        with open(datacsv_path_back) as f_in, open(datacsv_path, 'w') as f_out:
+            csv_reader = csv.DictReader(f_in)
+            csv_writer = csv.DictWriter(f_out, fieldnames=fieldnames)
+            csv_writer.writeheader()
+
+            for row in csv_reader:
+                p = (row["Dataset"], row["Path"])
+
+                if p in new_bks:
+                    current_certificate_path = None
+                    if "Certificate path" in row \
+                            and row["Certificate path"] != "":
+                        current_certificate_path = os.path.join(
+                                directory_in,
+                                row["Certificate path"])
+                        date = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M")
+                        old_certificate_path = os.path.join(
+                                directory_in,
+                                "certificates",
+                                row["Dataset"],
+                                row["Path"] + "_solution_" + date + ".txt")
+                        if not os.path.exists(os.path.dirname(old_certificate_path)):
+                            os.makedirs(os.path.dirname(old_certificate_path))
+                        shutil.move(current_certificate_path, old_certificate_path)
+                    new_certificate_rel_path = os.path.join(
+                            "certificates",
+                            row["Dataset"],
+                            row["Path"] + "_solution.txt")
+                    new_certificate_path = os.path.join(
+                            directory_in,
+                            new_certificate_rel_path)
+                    if not os.path.exists(os.path.dirname(new_certificate_path)):
+                        os.makedirs(os.path.dirname(new_certificate_path))
+                    shutil.copyfile(new_bks[p][1], new_certificate_path)
+
+                    row["Best known solution value"] = new_bks[p][0]
+                    row["Certificate path"] = new_certificate_rel_path
+                    print(f"New best known solution value for {p}:"
+                          f" {new_bks[p][0]}.")
+
+                if p in new_bkb:
+                    row["Best known bound"] = new_bkb[p]
+                    print(f"New best known solution bound for {p}: {new_bkb[p]}.")
+
+                csv_writer.writerow(row)
 
 
 if __name__ == "__main__":
