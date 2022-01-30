@@ -83,11 +83,12 @@ def run(main_exec,
             if "Best known solution value" in row:
                 bksv_str = row["Best known solution value"]
                 if bksv_str != "":
-                    bksv = float()
+                    bksv = float(bksv_str)
 
             current_certificate_path = None
             if "Certificate path" in row:
-                current_certificate_path = row["Certificate path"]
+                if row["Certificate path"] != "":
+                    current_certificate_path = row["Certificate path"]
 
             update = False
             if bksv is None:
