@@ -30,7 +30,7 @@ def process(
     with open(datacsv_path, "r") as f:
         reader = csv.reader(f)
         fieldnames = next(reader)
-    date = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M")
+    date = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     if output_name is None:
         output_name = " ".join([str(label) for label in labels])
         output_name = output_name.replace("/", "_")
