@@ -43,20 +43,22 @@ def run(main_exec,
 
         command = (
                 main_exec
-                + " -v"
-                + " -i \"" + instance_path + "\""
-                + (" -f " + row["Format"] if "Format" in row.keys() else "")
+                + " --verbose"
+                + " --input \"" + instance_path + "\""
+                + (" --format " + row["Format"]
+                   if "Format" in row.keys() else "")
                 + (" " + row["Options"] if "Options" in row.keys() else "")
-                + (" --best-known-bound \"" + row["Best known bound"] + "\""
+                + (" --goal \"" + row["Best known bound"] + "\""
                    if "Best known bound" in row.keys()
                    and row["Best known bound"]
                    else "")
-                + (" -t " + str(time_limit) if time_limit is not None else "")
-                + (" -a \"" + algorithm + "\""
+                + (" --time-limit " + str(time_limit)
+                   if time_limit is not None else "")
+                + (" --algorithm \"" + algorithm + "\""
                    if algorithm is not None else "")
                 + " " + options
-                + " -c \"" + certificate_path + "\""
-                + " -o \"" + json_output_path + "\"")
+                + " --certificate \"" + certificate_path + "\""
+                + " --output \"" + json_output_path + "\"")
         print(command)
         os.system(command)
         print()
