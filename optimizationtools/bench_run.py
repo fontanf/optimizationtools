@@ -17,7 +17,7 @@ def run(main_exec,
         objective_sense="min"):
 
     directory_in = os.path.dirname(datacsv_path)
-    reader = csv.DictReader(open(datacsv_path))
+    reader = csv.DictReader(open(datacsv_path))  # noqa: F841
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
 
     directory_out = os.path.join("output", label)
@@ -158,15 +158,19 @@ def run(main_exec,
                         current_certificate_path = os.path.join(
                                 directory_in,
                                 row["Certificate path"])
-                        date = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M")
+                        date = datetime.datetime.now().strftime(
+                                "%Y-%m-%d--%H-%M")
                         old_certificate_path = os.path.join(
                                 directory_in,
                                 "certificates",
                                 row["Dataset"],
                                 row["Path"] + "_solution_" + date + ".txt")
-                        if not os.path.exists(os.path.dirname(old_certificate_path)):
-                            os.makedirs(os.path.dirname(old_certificate_path))
-                        shutil.move(current_certificate_path, old_certificate_path)
+                        d = os.path.dirname(old_certificate_path)
+                        if not os.path.exists(d):
+                            os.makedirs(d)
+                        shutil.move(
+                                current_certificate_path,
+                                old_certificate_path)
                     new_certificate_rel_path = os.path.join(
                             "certificates",
                             row["Dataset"],
@@ -174,9 +178,12 @@ def run(main_exec,
                     new_certificate_path = os.path.join(
                             directory_in,
                             new_certificate_rel_path)
-                    if not os.path.exists(os.path.dirname(new_certificate_path)):
-                        os.makedirs(os.path.dirname(new_certificate_path))
-                    shutil.copyfile(new_bks[p][1], new_certificate_path)
+                    d = os.path.dirname(new_certificate_path)
+                    if not os.path.exists(d):
+                        os.makedirs(d)
+                    shutil.copyfile(
+                            new_bks[p][1],
+                            new_certificate_path)
 
                     row["Best known solution value"] = new_bks[p][0]
                     row["Certificate path"] = new_certificate_rel_path
@@ -185,7 +192,8 @@ def run(main_exec,
 
                 if p in new_bkb:
                     row["Best known bound"] = new_bkb[p]
-                    print(f"New best known solution bound for {p}: {new_bkb[p]}.")
+                    print(f"New best known solution bound for {p}:"
+                          f" {new_bkb[p]}.")
 
                 csv_writer.writerow(row)
 

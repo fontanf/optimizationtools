@@ -10,6 +10,15 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt  # noqa: E402
 
 
+def get_trimmed_path(path):
+
+    trimmed_path = path
+    path_length = len(trimmed_path)
+    if path_length > 32:
+        trimmed_path = "..." + trimmed_path[path_length - 29:]
+    return trimmed_path
+
+
 def process(
         datacsv_path,
         benchmark,
@@ -136,23 +145,29 @@ def process(
                 gap_dual_bkb = None
                 if primal == dual:
                     gap_primal_dual = 0
-                elif primal == float("inf") or primal == float("-inf") \
-                        or dual == float("inf") or dual == float("-inf"):
+                elif (
+                        primal == float("inf")
+                        or primal == float("-inf")
+                        or dual == float("inf")
+                        or dual == float("-inf")):
                     gap_primal_dual = 1
                 elif abs(primal - dual) < 10e-8:
                     gap_primal_dual = 0
                 elif primal * dual < 0:
                     gap_primal_dual = 1
                 elif objective_sense == "min":
-                    gap_primal_dual = (primal - dual) \
-                            / max(abs(primal), abs(dual))
+                    gap_primal_dual = (
+                            (primal - dual) / max(abs(primal), abs(dual)))
                 else:
-                    gap_primal_dual = (dual - primal) \
-                            / max(abs(primal), abs(dual))
+                    gap_primal_dual = (
+                            (dual - primal) / max(abs(primal), abs(dual)))
                 if dual == bkb:
                     gap_dual_bkb = 0
-                elif dual == float("inf") or dual == float("-inf") \
-                        or bkb == float("inf") or bkb == float("-inf"):
+                elif (
+                        dual == float("inf")
+                        or dual == float("-inf")
+                        or bkb == float("inf")
+                        or bkb == float("-inf")):
                     gap_dual_bkb = 1
                 elif abs(dual - bkb) < 10e-8:
                     gap_dual_bkb = 0
@@ -221,7 +236,8 @@ def process(
         # Draw time-instance plot.
         graph_path = (
                 "analysis"
-                + "/" + date + " - exact - " + output_name + " - time-instance")
+                + "/" + date
+                + " - exact - " + output_name + " - time-instance")
         if not os.path.isdir(os.path.dirname(graph_path)):
             os.makedirs(os.path.dirname(graph_path))
         fig, axs = plt.subplots(1)
@@ -243,7 +259,8 @@ def process(
         axs.legend(loc='upper left')
         axs.set_xticks(list(range(len(rows_new))))
         axs.set_xticklabels(
-                [row["Dataset"] + "/" + row["Path"] for row in rows_new],
+                [row["Dataset"] + "/" + get_trimmed_path(row["Path"])
+                 for row in rows_new],
                 rotation=45,
                 ha='right')
 
@@ -261,8 +278,8 @@ def process(
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
         for label in labels:
-            rows_new[-1][label + " / Time"] \
-                    = total_time[label] / number_of_instances
+            rows_new[-1][label + " / Time"] = (
+                    total_time[label] / number_of_instances)
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
@@ -320,8 +337,9 @@ def process(
                     for key, value in json_reader["Algorithm"].items():
                         rows_new[-1][label + " / " + key] = value
 
-                if benchmark == "heuristicshort" \
-                        and "Solution1" not in json_reader:
+                if (
+                        benchmark == "heuristicshort"
+                        and "Solution1" not in json_reader):
                     total_time[label] += timelimit
                     total_gap[label] += 1
                     continue
@@ -400,7 +418,11 @@ def process(
                     drawstyle='steps',
                     label=label,
                     alpha=0.5)
-        axs[0].hlines(number_of_instances, 0, timelimit, label="Instance number")
+        axs[0].hlines(
+                number_of_instances,
+                0,
+                timelimit,
+                label="Instance number")
         axs[1].hlines(number_of_instances, 0, 1, label="Instance number")
 
         axs[0].set_xlim([0, timelimit])
@@ -480,7 +502,8 @@ def process(
         axs[0].legend(loc='upper left')
         axs[0].set_xticks(list(range(len(rows_new))))
         axs[0].set_xticklabels(
-                [row["Dataset"] + "/" + row["Path"] for row in rows_new],
+                [row["Dataset"] + "/" + get_trimmed_path(row["Path"])
+                 for row in rows_new],
                 rotation=45,
                 ha='right')
 
@@ -492,7 +515,8 @@ def process(
         axs[1].legend(loc='upper left')
         axs[1].set_xticks(list(range(len(rows_new))))
         axs[1].set_xticklabels(
-                [row["Dataset"] + "/" + row["Path"] for row in rows_new],
+                [row["Dataset"] + "/" + get_trimmed_path(row["Path"])
+                 for row in rows_new],
                 rotation=45,
                 ha='right')
         axs[1].set_yticks([
@@ -514,10 +538,10 @@ def process(
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
         for label in labels:
-            rows_new[-1][label + " / Time"] \
-                    = total_time[label] / number_of_instances
-            rows_new[-1][label + " / Gap"] \
-                    = total_gap[label] / number_of_instances * 100
+            rows_new[-1][label + " / Time"] = (
+                    total_time[label] / number_of_instances)
+            rows_new[-1][label + " / Gap"] = (
+                    total_gap[label] / number_of_instances * 100)
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
@@ -604,7 +628,9 @@ def process(
                             float(json_reader["Solution" + str(k + 1)]["Time"])
                             if "Solution" + str(k + 1) in json_reader.keys()
                             else timelimit)
-                    for t in range(math.ceil(1000 * t_curr / timelimit), math.floor(1000 * t_next / timelimit) + 1):
+                    ti_min = math.ceil(1000 * t_curr / timelimit)
+                    ti_max = math.floor(1000 * t_next / timelimit) + 1
+                    for t in range(ti_min, ti_max):
                         primals[t] = v_curr
                     k += 1
                     rows_new[-1][label + " / Primal"] = v_curr
@@ -617,11 +643,14 @@ def process(
                     while "Bound" + str(k) in json_reader.keys():
                         v_curr = float(json_reader["Bound" + str(k)]["Value"])
                         t_curr = float(json_reader["Bound" + str(k)]["Time"])
+                        section = "Bound" + str(k + 1)
                         t_next = (
-                                float(json_reader["Bound" + str(k + 1)]["Time"])
-                                if "Bound" + str(k + 1) in json_reader.keys()
+                                float(json_reader[section]["Time"])
+                                if section in json_reader.keys()
                                 else timelimit)
-                        for t in range(math.ceil(1000 * t_curr / timelimit), math.floor(1000 * t_next / timelimit) + 1):
+                        ti_min = math.ceil(1000 * t_curr / timelimit)
+                        ti_max = math.floor(1000 * t_next / timelimit) + 1
+                        for t in range(ti_min, ti_max):
                             duals[t] = v_curr
                         k += 1
                         rows_new[-1][label + " / Dual"] = v_curr
@@ -643,8 +672,10 @@ def process(
                         gaps[t] = (p - d) / max(abs(p), abs(d))
                     else:
                         gaps[t] = (d - p) / max(abs(p), abs(d))
-                    if t > 0 and gaps[t - 1] == 0 \
-                            and benchmark == "primaldual":
+                    if (
+                            t > 0
+                            and gaps[t - 1] == 0
+                            and benchmark == "primaldual"):
                         primals[t] = 0
                         duals[t] = 0
                     area += gaps[t]
@@ -726,8 +757,8 @@ def process(
         fig.suptitle(instance_filter)
         for label in labels:
             for t in range(1000 + 1):
-                average_gaps[label][t] \
-                        = average_gaps[label][t][0] / average_gaps[label][t][1]
+                average_gaps[label][t] = (
+                        average_gaps[label][t][0] / average_gaps[label][t][1])
             axs.plot(
                     times,
                     average_gaps[label],
@@ -781,7 +812,8 @@ def process(
         axs.legend(loc='upper left')
         axs.set_xticks(list(range(len(rows_new))))
         axs.set_xticklabels(
-                [row["Dataset"] + "/" + row["Path"] for row in rows_new],
+                [row["Dataset"] + "/" + get_trimmed_path(row["Path"])
+                 for row in rows_new],
                 rotation=45,
                 ha='right')
         axs.set_yticks([
@@ -810,8 +842,8 @@ def process(
             os.makedirs(os.path.dirname(csv_path))
         rows_new.append({})
         for label in labels:
-            rows_new[-1][label + " / Average gap"] \
-                    = sum(average_gaps[label]) / timelimit
+            rows_new[-1][label + " / Average gap"] = (
+                    sum(average_gaps[label]) / timelimit)
         with open(csv_path, 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
