@@ -34,7 +34,6 @@ def run(main_exec,
                 directory_out, row["Dataset"], row["Path"] + ".json")
         certificate_path = os.path.join(
                 directory_out, row["Dataset"], row["Path"] + "_solution.txt")
-        cutoff = row["Best known bound"]
         if not os.path.exists(os.path.dirname(json_output_path)):
             os.makedirs(os.path.dirname(json_output_path))
         if os.path.exists(instance_path + ".lz4"):
@@ -48,7 +47,10 @@ def run(main_exec,
                 + " -i \"" + instance_path + "\""
                 + (" -f " + row["Format"] if "Format" in row.keys() else "")
                 + (" " + row["Options"] if "Options" in row.keys() else "")
-                + (" --cutoff \"" + cutoff + "\"" if cutoff != "" else "")
+                + (" --best-known-bound \"" + row["Best known bound"] + "\""
+                   if "Best known bound" in row.keys()
+                   and row["Best known bound"]
+                   else "")
                 + (" -t " + str(time_limit) if time_limit is not None else "")
                 + (" -a \"" + algorithm + "\""
                    if algorithm is not None else "")
@@ -72,6 +74,7 @@ def run(main_exec,
         # Update best known solution.
         if "Solution" in json_reader:
             primal_str = json_reader["Solution"]["Value"]
+            primal_str = str(primal_str)
             if "," in primal_str:
                 primal = float(primal_str.split(',')[0])
                 if objective_sense != "min":
@@ -87,7 +90,7 @@ def run(main_exec,
 
             current_certificate_path = None
             if "Certificate path" in row:
-                if row["Certificate path"] != "":
+                if row["Certificate path"]:
                     current_certificate_path = row["Certificate path"]
 
             update = False
@@ -110,7 +113,8 @@ def run(main_exec,
 
             bkb = None
             if "Best known bound" in row:
-                bkb = float(row["Best known bound"])
+                if row["Best known bound"]:
+                    bkb = float(row["Best known bound"])
 
             update = False
             if bkb is None:
