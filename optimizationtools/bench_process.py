@@ -896,6 +896,11 @@ if __name__ == "__main__":
             nargs='?',
             default=False,
             help='')
+    parser.add_argument(
+            "-o", "--output",
+            type=str,
+            default=None,
+            help='')
 
     args = parser.parse_args()
 
@@ -905,4 +910,5 @@ if __name__ == "__main__":
             args.filter,
             args.timelimit,
             args.objectivesense,
-            args.instanceplots)
+            args.instanceplots,
+            args.output)
