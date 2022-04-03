@@ -35,6 +35,7 @@ public:
 
     inline IndexedSet(Index number_of_elements);
     inline virtual ~IndexedSet() { }
+    inline void add_element();
 
     inline bool empty() const { return number_of_elements_ == 0; }
     inline Position size() const { return number_of_elements_; }
@@ -64,7 +65,9 @@ private:
 
 };
 
-/******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 inline IndexedSet::IndexedSet(Index number_of_elements):
     elements_(number_of_elements),
@@ -74,6 +77,13 @@ inline IndexedSet::IndexedSet(Index number_of_elements):
         elements_[index] = index;
         positions_[index] = index;
     }
+}
+
+inline void IndexedSet::add_element()
+{
+    Index index = elements_.size();
+    elements_.push_back(index);
+    positions_.push_back(index);
 }
 
 inline bool IndexedSet::add(Index index)
