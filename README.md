@@ -1,6 +1,6 @@
 # OptimizationTools
 
-## Collections
+## Containers
 
 ### IndexedBinaryHeap
 
@@ -64,7 +64,13 @@ An array for which it is possible to request the `i`th smallest element without 
 * Bob Floyd's algorithm to draw `k` different integers in `[0, u]`. Typically used to draw seeds for each thread of a parallel algorithm from the initial seed.
 * A function to split a string according to a given separator. Useful to read `csv` files.
 
-## Info
+### Info
 
 Various tools for optimization algorithms (logger, thread safe printer on standard output, writer for output files in `json` format, time counter and checker, solution counter, certificate writer)
 
+## Graph
+
+An abstract graph structure and with a couple of implementations:
+* `AdjacencyListGraph`
+* `AdjacencyMatrixGraph`
+* `CliqueGraph`
