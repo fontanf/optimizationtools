@@ -55,6 +55,7 @@ public:
         vertex.id = vertices_.size();
         vertex.weight = weight;
         vertices_.push_back(vertex);
+        total_weight_ += weight;
         return vertex.id;
     }
 
@@ -100,6 +101,8 @@ public:
 
     inline Weight weight(VertexId v) const override { return vertices_[v].weight; }
 
+    virtual Weight total_weight() const override { return total_weight_; };
+
     virtual const_iterator neighbors_begin(VertexId v) const override
     {
         neighbors_tmp_.clear();
@@ -131,6 +134,9 @@ private:
 
     /** Maximum degree. */
     VertexPos maximum_degree_ = 0;
+
+    /** Maximum degree. */
+    Weight total_weight_ = 0;
 
     /** Vector filled and returned by the 'adjacency_list' method. */
     mutable IndexedSet neighbors_tmp_;

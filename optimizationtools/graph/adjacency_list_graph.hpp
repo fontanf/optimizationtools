@@ -1,9 +1,11 @@
 #pragma once
 
 #include "optimizationtools/graph/abstract_graph.hpp"
+#include "optimizationtools/utils/utils.hpp"
 
 #include <cstdint>
 #include <vector>
+#include <fstream>
 
 namespace optimizationtools
 {
@@ -54,6 +56,29 @@ public:
     /** Constructor. */
     inline AdjacencyListGraph() { }
 
+    AdjacencyListGraph(std::string instance_path, std::string format)
+    {
+        std::ifstream file(instance_path);
+        if (!file.good())
+            throw std::runtime_error(
+                    "Unable to open file \"" + instance_path + "\".");
+
+        if (format == "dimacs1992") {
+            read_dimacs1992(file);
+        } else if (format == "dimacs2010") {
+            read_dimacs2010(file);
+        } else if (format == "matrixmarket") {
+            read_matrixmarket(file);
+        } else if (format == "snap") {
+            read_snap(file);
+        } else if (format == "chaco") {
+            read_chaco(file);
+        } else {
+            throw std::invalid_argument(
+                    "Unknown instance format \"" + format + "\".");
+        }
+    }
+
     /** Add a vertex. */
     virtual VertexId add_vertex(Weight weight = 1)
     {
@@ -61,13 +86,16 @@ public:
         vertex.id = vertices_.size();
         vertex.weight = weight;
         vertices_.push_back(vertex);
+        total_weight_ += weight;
         return vertex.id;
     }
 
     /** Set the weight of vertex 'v' to 'weight'. */
     void set_weight(VertexId v, Weight weight)
     {
+        total_weight_ -= vertices_[v].weight;
         vertices_[v].weight = weight;
+        total_weight_ += vertices_[v].weight;
     };
 
     /** Set the weight of all vertices to 1. */
@@ -137,6 +165,8 @@ public:
 
     inline Weight weight(VertexId v) const override { return vertices_[v].weight; }
 
+    virtual Weight total_weight() const override { return total_weight_; };
+
     const_iterator neighbors_begin(VertexId v) const override
     {
         return vertices_[v].neighbors.begin();
@@ -176,6 +206,130 @@ private:
 
     /** Maximum degree. */
     VertexPos maximum_degree_ = 0;
+
+    /** Total weight. */
+    Weight total_weight_ = 0;
+
+    /*
+     * Private methods.
+     */
+
+    void read_dimacs1992(std::ifstream& file)
+    {
+        std::string tmp;
+        std::vector<std::string> line;
+
+        while (getline(file, tmp)) {
+            line = optimizationtools::split(tmp, ' ');
+            if (line.size() == 0) {
+            } else if (line[0] == "c") {
+            } else if (line[0] == "p") {
+                VertexId number_of_vertices = stol(line[2]);
+                for (VertexId v = 0; v < number_of_vertices; ++v)
+                    add_vertex();
+            } else if (line[0] == "n") {
+                VertexId v = stol(line[1]) - 1;
+                Weight w = stol(line[2]);
+                set_weight(v, w);
+            } else if (line[0] == "e") {
+                VertexId v1 = stol(line[1]) - 1;
+                VertexId v2 = stol(line[2]) - 1;
+                add_edge(v1, v2);
+            }
+        }
+    }
+
+    void read_dimacs2010(std::ifstream& file)
+    {
+        std::string tmp;
+        std::vector<std::string> line;
+        bool first = true;
+        VertexId v = -1;
+        while (v != number_of_vertices()) {
+            getline(file, tmp);
+            //std::cout << tmp << std::endl;
+            line = optimizationtools::split(tmp, ' ');
+            if (tmp[0] == '%')
+                continue;
+            if (first) {
+                VertexId number_of_vertices = stol(line[0]);
+                for (VertexId v = 0; v < number_of_vertices; ++v)
+                    add_vertex();
+                first = false;
+                v = 0;
+            } else {
+                for (std::string str: line) {
+                    VertexId v2 = stol(str) - 1;
+                    if (v2 > v)
+                        add_edge(v, v2);
+                }
+                v++;
+            }
+        }
+    }
+
+    void read_matrixmarket(std::ifstream& file)
+    {
+        std::string tmp;
+        std::vector<std::string> line;
+        do {
+            getline(file, tmp);
+        } while (tmp[0] == '%');
+        std::stringstream ss(tmp);
+        VertexId n = -1;
+        ss >> n;
+        for (VertexId v = 0; v < n; ++v)
+            add_vertex();
+
+        VertexId v1 = -1;
+        VertexId v2 = -1;
+        while (getline(file, tmp)) {
+            std::stringstream ss(tmp);
+            ss >> v1 >> v2;
+            add_edge(v1 - 1, v2 - 1);
+        }
+    }
+
+    void read_chaco(std::ifstream& file)
+    {
+        std::string tmp;
+        std::vector<std::string> line;
+
+        getline(file, tmp);
+        line = optimizationtools::split(tmp, ' ');
+        VertexId number_of_vertices = stol(line[0]);
+        vertices_.resize(number_of_vertices);
+
+        for (VertexId v = 0; v < number_of_vertices; ++v) {
+            getline(file, tmp);
+            line = optimizationtools::split(tmp, ' ');
+            for (std::string str: line) {
+                VertexId v2 = stol(str) - 1;
+                if (v2 > v)
+                    add_edge(v, v2);
+            }
+        }
+    }
+
+    void read_snap(std::ifstream& file)
+    {
+        std::string tmp;
+        std::vector<std::string> line;
+        do {
+            getline(file, tmp);
+        } while (tmp[0] == '#');
+
+        VertexId v1 = -1;
+        VertexId v2 = -1;
+        for (;;) {
+            file >> v1 >> v2;
+            if (file.eof())
+                break;
+            while (std::max(v1, v2) >= number_of_vertices())
+                add_vertex();
+            add_edge(v1, v2);
+        }
+    }
 
 };
 

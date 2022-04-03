@@ -52,6 +52,9 @@ public:
     /** Get the weight of vertex 'v'. */
     virtual Weight weight(VertexId v) const = 0;
 
+    /** Get the total weight of the graph. */
+    virtual Weight total_weight() const = 0;
+
     typedef typename std::vector<VertexId>::const_iterator const_iterator;
 
     /**
