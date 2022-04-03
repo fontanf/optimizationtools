@@ -9,34 +9,34 @@
 
 #include <nlohmann/json.hpp>
 
-#define VER(info, message) \
+#define FFOT_VER(info, message) \
     if (info.output->verbose) { \
         info.output->mutex_cout.lock(); \
         std::cout << message; \
         info.output->mutex_cout.unlock(); \
     }
 
-#define PUT(info, category, key, value) \
+#define FFOT_PUT(info, category, key, value) \
     info.output->mutex_json.lock(); \
     info.output->j[category][key] = value; \
     info.output->mutex_json.unlock();
 
-#define COMMA ,
+#define FFOT_COMMA ,
 
 #ifdef NDEBUG
 
-#define DBG(x)
-#define LOG(info, message) {  }
-#define LOG_FOLD_START(info, message) {  }
-#define LOG_FOLD_END(info, message) {  }
-#define LOG_FOLD(info, message) {  }
-#define LOG_ON(info) {  }
-#define LOG_OFF(info) {  }
+#define FFOT_DBG(x)
+#define FFOT_LOG(info, message) {  }
+#define FFOT_LOG_FOLD_START(info, message) {  }
+#define FFOT_LOG_FOLD_END(info, message) {  }
+#define FFOT_LOG_FOLD(info, message) {  }
+#define FFOT_LOG_ON(info) {  }
+#define FFOT_LOG_OFF(info) {  }
 
 #else
 
-#define DBG(x) x
-#define LOG(info, message) \
+#define FFOT_DBG(x) x
+#define FFOT_LOG(info, message) \
     { \
         if (info.logger->on && info.logger->level <= info.logger->maximum_log_level) { \
             if (info.logger->log_file.is_open()) \
@@ -45,28 +45,28 @@
                 std::cerr << message; \
         } \
     }
-#define LOG_FOLD_START(info, message) \
+#define FFOT_LOG_FOLD_START(info, message) \
     { \
         info.logger->level++; \
         LOG(info, "{{{ " << message); \
     }
-#define LOG_FOLD_END(info, message) \
+#define FFOT_LOG_FOLD_END(info, message) \
     { \
         LOG(info, message << " }}}" << std::endl); \
         info.logger->level--; \
     }
-#define LOG_FOLD(info, message) \
+#define FFOT_LOG_FOLD(info, message) \
     { \
         info.logger->level++; \
         LOG(info, "{{{ " << message << " }}}" << std::endl); \
         info.logger->level--; \
     }
-#define LOG_ON(info)  { info.logger->on = true; }
-#define LOG_OFF(info) { info.logger->on = false; }
+#define FFOT_LOG_ON(info)  { info.logger->on = true; }
+#define FFOT_LOG_OFF(info) { info.logger->on = false; }
 
 #endif
 
-#define TOL 0.000001
+#define FFOT_TOL 0.000001
 
 namespace optimizationtools
 {
