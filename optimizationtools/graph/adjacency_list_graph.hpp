@@ -189,6 +189,29 @@ public:
         return (v == edges_[e].v1)? edges_[e].v2: edges_[e].v1;
     }
 
+    void write_snap(std::ofstream& file)
+    {
+        for (EdgeId e = 0; e < number_of_edges(); ++e)
+            file << first_end(e) << " " << second_end(e) << std::endl;
+    }
+
+    void write_matrixmarket(std::ofstream& file)
+    {
+        file << number_of_vertices()
+            << " " << number_of_vertices()
+            << " " << number_of_edges()
+            << std::endl;
+        for (EdgeId e = 0; e < number_of_edges(); ++e)
+            file << first_end(e) + 1 << " " << second_end(e) + 1 << std::endl;
+    }
+
+    void write_dimacs(std::ofstream& file)
+    {
+        file << "p edge " << number_of_vertices() << " " << number_of_edges() << std::endl;
+        for (EdgeId e = 0; e < number_of_edges(); ++e)
+            file << "e " << first_end(e) + 1 << " " << second_end(e) + 1 << std::endl;
+    }
+
 private:
 
     /*

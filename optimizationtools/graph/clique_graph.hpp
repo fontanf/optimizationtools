@@ -67,6 +67,20 @@ public:
         return id;
     }
 
+    /** Add a new clique. */
+    CliqueId add_clique(const std::vector<VertexId>& clique)
+    {
+        CliqueId id = cliques_.size();
+        cliques_.push_back(clique);
+        for (VertexId v: clique) {
+            vertices_[v].degree += clique.size() - 1;
+            if (maximum_degree_ < degree(v))
+                maximum_degree_ = degree(v);
+        }
+        number_of_edges_ += clique.size() * (clique.size() - 1) / 2;
+        return id;
+    }
+
     /** Add a vertex to a clique. */
     void add_vertex_to_clique(CliqueId clique_id, VertexId v)
     {
