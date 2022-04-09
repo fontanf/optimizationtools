@@ -41,6 +41,7 @@ Info::Info(const Info& info, bool keep_output, std::string keep_logger)
         std::shared_ptr<Output>(info.output);
     start = info.start;
     time_limit = info.time_limit;
+    end = info.end;
 }
 
 Info& Info::set_log_path(std::string log_path)

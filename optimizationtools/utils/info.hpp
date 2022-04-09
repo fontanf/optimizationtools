@@ -297,7 +297,12 @@ public:
     bool terminated_by_sigint() const;
 
     /** Return 'true' iff the algorithm needs to end. */
-    bool needs_to_end() const { return !check_time() || terminated_by_sigint(); }
+    bool needs_to_end() const
+    {
+        return !check_time()
+            || terminated_by_sigint()
+            || (end != nullptr && *end);
+    }
 
     /*
      * JSON output.
@@ -325,6 +330,9 @@ public:
 
     /** Time limit of the algorithm. */
     double time_limit = std::numeric_limits<double>::infinity();
+
+    /** Flag that the user can set to 'true' to tell the algorithm to stop. */
+    bool* end = nullptr;
 
 };
 
