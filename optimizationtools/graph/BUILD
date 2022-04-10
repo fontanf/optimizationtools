@@ -6,7 +6,14 @@ cc_library(
                 "adjacency_matrix_graph.hpp",
                 "clique_graph.hpp",
         ],
-        srcs = [ ],
+        srcs = [
+                "adjacency_list_graph.cpp",
+                "clique_graph.cpp",
+        ],
+        deps = [
+                "//optimizationtools/utils:utils",
+                "//optimizationtools/containers:containers",
+        ],
         visibility = ["//visibility:public"],
 )
 

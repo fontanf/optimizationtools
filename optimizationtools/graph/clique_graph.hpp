@@ -40,7 +40,10 @@ public:
      * Constructors and destructor.
      */
 
-    /** Constructor. */
+    /** Create a graph from a file. */
+    CliqueGraph(std::string instance_path, std::string format);
+
+    /** Create an empty graph. */
     inline CliqueGraph():
         AbstractGraph(),
         neighbors_tmp_(0) { }
@@ -49,52 +52,16 @@ public:
     inline virtual ~CliqueGraph() { }
 
     /** Add a vertex. */
-    virtual VertexId add_vertex(Weight weight = 1)
-    {
-        Vertex vertex;
-        vertex.id = vertices_.size();
-        vertex.weight = weight;
-        vertices_.push_back(vertex);
-        total_weight_ += weight;
-        return vertex.id;
-    }
+    virtual VertexId add_vertex(Weight weight = 1);
 
     /** Add a new clique. */
-    CliqueId add_clique()
-    {
-        CliqueId id = cliques_.size();
-        cliques_.push_back({});
-        return id;
-    }
+    CliqueId add_clique();
 
     /** Add a new clique. */
-    CliqueId add_clique(const std::vector<VertexId>& clique)
-    {
-        CliqueId id = cliques_.size();
-        cliques_.push_back(clique);
-        for (VertexId v: clique) {
-            vertices_[v].degree += clique.size() - 1;
-            if (maximum_degree_ < degree(v))
-                maximum_degree_ = degree(v);
-        }
-        number_of_edges_ += clique.size() * (clique.size() - 1) / 2;
-        return id;
-    }
+    CliqueId add_clique(const std::vector<VertexId>& clique);
 
     /** Add a vertex to a clique. */
-    void add_vertex_to_clique(CliqueId clique_id, VertexId v)
-    {
-        number_of_edges_ += cliques_[clique_id].size();
-        for (VertexId v2: cliques_[clique_id])
-            vertices_[v2].degree++;
-        vertices_[v].degree += cliques_[clique_id].size();
-        vertices_[v].cliques.push_back(clique_id);
-        cliques_[clique_id].push_back(v);
-
-        for (VertexId v2: cliques_[clique_id])
-            if (maximum_degree_ < degree(v2))
-                maximum_degree_ = degree(v2);
-    }
+    void add_vertex_to_clique(CliqueId clique_id, VertexId v);
 
     virtual CliqueGraph* clone() const override
     {
@@ -122,7 +89,8 @@ public:
         neighbors_tmp_.clear();
         for (CliqueId clique_id: vertices_[v].cliques)
             for (VertexId v2: cliques_[clique_id])
-                neighbors_tmp_.add(v2);
+                if (v2 != v)
+                    neighbors_tmp_.add(v2);
         return neighbors_tmp_.begin();
     }
 
@@ -154,6 +122,13 @@ private:
 
     /** Vector filled and returned by the 'adjacency_list' method. */
     mutable IndexedSet neighbors_tmp_;
+
+    /*
+     * Private methods.
+     */
+
+    /** Read a graph in 'default' format. */
+    void read_cliquegraph(std::ifstream& file);
 
 };
 
