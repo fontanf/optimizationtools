@@ -68,10 +68,16 @@ EdgeId AdjacencyListGraph::add_edge(VertexId v1, VertexId v2)
     edge.v2 = v2;
     edges_.push_back(edge);
 
-    vertices_[v1].edges.push_back(edge.id);
+    VertexEdge ve1;
+    ve1.e = edge.id;
+    ve1.v = v2;
+    vertices_[v1].edges.push_back(ve1);
     vertices_[v1].neighbors.push_back(v2);
 
-    vertices_[v2].edges.push_back(edge.id);
+    VertexEdge ve2;
+    ve2.e = edge.id;
+    ve2.v = v1;
+    vertices_[v2].edges.push_back(ve2);
     vertices_[v2].neighbors.push_back(v1);
 
     number_of_edges_++;

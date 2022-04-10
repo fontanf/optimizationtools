@@ -16,6 +16,17 @@ public:
      */
 
     /**
+     * Structure that stores the information for an edge incident to a vertex.
+     */
+    struct VertexEdge
+    {
+        /** Id of the edge. */
+        EdgeId e;
+        /** Id of the neighbor. */
+        VertexId v;
+    };
+
+    /**
      * Structure that stores the information for a vertex.
      */
     struct Vertex
@@ -27,7 +38,7 @@ public:
         /** Id of the connected component of the vertex. */
         ComponentId component = -1;
         /** Neighbors of the vertex. */
-        std::vector<EdgeId> edges;
+        std::vector<VertexEdge> edges;
         /** Neighbors of the vertex. */
         std::vector<VertexId> neighbors;
     };
@@ -127,7 +138,7 @@ public:
     }
 
     /** The the list of edges incident to vertex 'v'. */
-    const std::vector<EdgeId>& edges(VertexId v) const { return vertices_[v].edges; }
+    inline const std::vector<VertexEdge>& edges(VertexId v) const { return vertices_[v].edges; }
 
     /*
      * Export.

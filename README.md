@@ -71,6 +71,6 @@ Various tools for optimization algorithms (logger, thread safe printer on standa
 ## Graph
 
 An abstract graph structure and with a couple of implementations:
-* `AdjacencyListGraph`
-* `AdjacencyMatrixGraph`
-* `CliqueGraph`
+* `AdjacencyListGraph`: fast, but might have a high memory requirement
+* `AdjacencyMatrixGraph`: space efficient for dense graph
+* `CliqueGraph`: space efficient for such graph
