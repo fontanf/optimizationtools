@@ -86,15 +86,18 @@ public:
 
     virtual const_iterator neighbors_begin(VertexId v) const override
     {
-        neighbors_tmp_.clear();
-        for (CliqueId clique_id: vertices_[v].cliques)
-            for (VertexId v2: cliques_[clique_id])
-                if (v2 != v)
-                    neighbors_tmp_.add(v2);
+        if (v != v_tmp_) {
+            neighbors_tmp_.clear();
+            for (CliqueId clique_id: vertices_[v].cliques)
+                for (VertexId v2: cliques_[clique_id])
+                    if (v2 != v)
+                        neighbors_tmp_.add(v2);
+            v_tmp_ = v;
+        }
         return neighbors_tmp_.begin();
     }
 
-    virtual const_iterator neighbors_end(VertexId) const override
+    inline virtual const_iterator neighbors_end(VertexId) const override
     {
         return neighbors_tmp_.end();
     }
@@ -122,6 +125,9 @@ private:
 
     /** Vector filled and returned by the 'adjacency_list' method. */
     mutable IndexedSet neighbors_tmp_;
+
+    /** Last vertex for which method 'neighbors_begin' has been called. */
+    mutable VertexId v_tmp_ = -1;
 
     /*
      * Private methods.

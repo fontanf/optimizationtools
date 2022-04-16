@@ -39,6 +39,7 @@ void CliqueGraph::read_cliquegraph(std::ifstream& file)
     for (VertexId v = 0; v < n; ++v)
         add_vertex();
 
+    getline(file, tmp);
     for (CliqueId clique_id = 0; clique_id < number_of_cliques; ++clique_id) {
         getline(file, tmp);
         line = optimizationtools::split(tmp, ' ');
