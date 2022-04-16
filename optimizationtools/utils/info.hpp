@@ -48,17 +48,17 @@
 #define FFOT_LOG_FOLD_START(info, message) \
     { \
         info.logger->level++; \
-        LOG(info, "{{{ " << message); \
+        FFOT_LOG(info, "{{{ " << message); \
     }
 #define FFOT_LOG_FOLD_END(info, message) \
     { \
-        LOG(info, message << " }}}" << std::endl); \
+        FFOT_LOG(info, message << " }}}" << std::endl); \
         info.logger->level--; \
     }
 #define FFOT_LOG_FOLD(info, message) \
     { \
         info.logger->level++; \
-        LOG(info, "{{{ " << message << " }}}" << std::endl); \
+        FFOT_LOG(info, "{{{ " << message << " }}}" << std::endl); \
         info.logger->level--; \
     }
 #define FFOT_LOG_ON(info)  { info.logger->on = true; }
