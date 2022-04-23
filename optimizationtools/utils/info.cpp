@@ -9,6 +9,10 @@ volatile sig_atomic_t sigint_flag = 0;
 
 void sigint_handler(int)
 {
+    if (sigint_flag == 1) {
+        std::cout << std::endl;
+        exit(1);
+    }
     sigint_flag = 1; // set flag
 }
 
@@ -81,9 +85,10 @@ void Info::write_json_output(std::string json_output_path) const
         return;
     output->mutex_json.lock();
     std::ofstream file(json_output_path);
-    if (!file.good())
+    if (!file.good()) {
         throw std::runtime_error(
                 "Unable to open file \"" + json_output_path + "\".");
+    }
     file << std::setw(4) << output->j << std::endl;
     output->mutex_json.unlock();
 }
