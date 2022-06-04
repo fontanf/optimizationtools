@@ -20,6 +20,7 @@ Info::Info()
 {
     logger = std::shared_ptr<Logger>(new Logger());
     output = std::shared_ptr<Output>(new Output());
+    output->os.link_stream(std::cout);
     start = std::chrono::high_resolution_clock::now();
 }
 
@@ -31,7 +32,7 @@ Info::Info(const Info& info, bool keep_output, std::string keep_logger)
         // Insert 'keep_logger' string before the extension.
         std::string log_file = info.logger->log_path;
         if (log_file != "") {
-            for (int i=log_file.length()-1; i>=0; --i) {
+            for (int i = log_file.length() - 1; i >= 0; --i) {
                 if (log_file[i] == '.') {
                     log_file.insert(i, "_" + keep_logger);
                     break;
@@ -41,8 +42,12 @@ Info::Info(const Info& info, bool keep_output, std::string keep_logger)
         logger = std::shared_ptr<Logger>(new Logger());
         set_log_path(log_file);
     }
-    output = (!keep_output)? std::shared_ptr<Output>(new Output()):
-        std::shared_ptr<Output>(info.output);
+    if (keep_output) {
+        output = std::shared_ptr<Output>(info.output);
+    } else {
+        output = std::shared_ptr<Output>(new Output());
+        output->os.link_stream(std::cout);
+    }
     start = info.start;
     time_limit = info.time_limit;
     end = info.end;
@@ -81,15 +86,15 @@ bool Info::terminated_by_sigint() const
 
 void Info::write_json_output(std::string json_output_path) const
 {
+#if FFOT_USE_JSON == 1
     if (json_output_path == "")
         return;
-    output->mutex_json.lock();
     std::ofstream file(json_output_path);
     if (!file.good()) {
         throw std::runtime_error(
                 "Unable to open file \"" + json_output_path + "\".");
     }
-    file << std::setw(4) << output->j << std::endl;
-    output->mutex_json.unlock();
+    file << std::setw(4) << output->json << std::endl;
+#endif
 }
 
