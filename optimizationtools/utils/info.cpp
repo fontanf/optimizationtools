@@ -21,6 +21,7 @@ Info::Info()
     logger = std::shared_ptr<Logger>(new Logger());
     output = std::shared_ptr<Output>(new Output());
     output->os.link_stream(std::cout);
+    set_verbose(false);
     start = std::chrono::high_resolution_clock::now();
 }
 
