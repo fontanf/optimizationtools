@@ -13,7 +13,7 @@
  *
  * Verbosity features:
  * - Enable verbosity:
- *     info.set_verbose(true);
+ *     info.set_verbosity_leve(1);
  * - Write something on the standard output:
  *     info.os() << "Print " << message;
  *
@@ -243,6 +243,8 @@ public:
         /** JSON output file. */
         nlohmann::json json;
 #endif
+        /** Verbose level. */
+        int verbosity_level = 0;
         /** Only write outputs at the end of the algorithm. */
         bool only_write_at_the_end = true;
         /** Path to the JSON output file. */
@@ -284,20 +286,25 @@ public:
      * Getters.
      */
 
+    /** Get output stream. */
     OutputStream& os() { return output->os; }
+
+    /** Get verbosity level. */
+    int verbosity_level() const { return output->verbosity_level; }
 
     /*
      * Setters.
      */
 
     /** Enable verbosity. */
-    Info& set_verbose(bool verbose)
+    Info& set_verbosity_level(int verbosity_level)
     {
-        if (verbose) {
+        if (verbosity_level > 0) {
             output->os.clear();
         } else {
             output->os.setstate(std::ios_base::failbit);
         }
+        output->verbosity_level = verbosity_level;
         return *this;
     }
 
