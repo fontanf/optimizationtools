@@ -48,6 +48,7 @@ Info::Info(const Info& info, bool keep_output, std::string keep_logger)
     } else {
         output = std::shared_ptr<Output>(new Output());
         output->os.link_stream(std::cout);
+        set_verbosity_level(0);
     }
     start = info.start;
     time_limit = info.time_limit;
