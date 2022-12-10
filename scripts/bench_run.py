@@ -43,7 +43,7 @@ def run(main_exec,
 
         command = (
                 main_exec
-                + " --verbose"
+                + " --verbosity-level 1"
                 + " --input \"" + instance_path + "\""
                 + (" --format " + row["Format"]
                    if "Format" in row.keys() else "")
