@@ -156,7 +156,6 @@ void update_solution(
 #include <mutex>
 #include <iomanip>
 #include <memory>
-#include <functional>
 
 #if FFOT_USE_JSON == 1
 #include <nlohmann/json.hpp>
@@ -169,17 +168,15 @@ class OutputStream: public std::ostream
 {
     struct ComposeBuffer: public std::streambuf
     {
-        void addBuffer(std::streambuf* buf)
+        void add_buffer(std::streambuf* buf)
         {
             bufs.push_back(buf);
         }
 
         virtual int overflow(int c)
         {
-            std::for_each(
-                    bufs.begin(),
-                    bufs.end(),
-                    std::bind2nd(std::mem_fun(&std::streambuf::sputc), c));
+            for (auto buf: bufs)
+                buf->sputc(c);
             return c;
         }
 
@@ -197,7 +194,7 @@ public:
     void link_stream(std::ostream& out)
     {
         out.flush();
-        buffer.addBuffer(out.rdbuf());
+        buffer.add_buffer(out.rdbuf());
     }
 
 private:
