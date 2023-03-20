@@ -156,6 +156,7 @@ void update_solution(
 #include <mutex>
 #include <iomanip>
 #include <memory>
+#include <functional>
 
 #if FFOT_USE_JSON == 1
 #include <nlohmann/json.hpp>
