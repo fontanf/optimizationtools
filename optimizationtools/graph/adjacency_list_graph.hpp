@@ -22,6 +22,7 @@ public:
     {
         /** Id of the edge. */
         EdgeId e;
+
         /** Id of the neighbor. */
         VertexId v;
     };
@@ -33,12 +34,16 @@ public:
     {
         /** Unique id of the vertex. */
         VertexId id;
+
         /** Weight of the vertex. */
         Weight weight = 1;
+
         /** Id of the connected component of the vertex. */
         ComponentId component = -1;
+
         /** Neighbors of the vertex. */
         std::vector<VertexEdge> edges;
+
         /** Neighbors of the vertex. */
         std::vector<VertexId> neighbors;
     };
@@ -50,8 +55,10 @@ public:
     {
         /** Unique id of the edge. */
         EdgeId id;
+
         /** First end of the edge. */
         VertexId v1;
+
         /** Second end of the edge. */
         VertexId v2;
     };

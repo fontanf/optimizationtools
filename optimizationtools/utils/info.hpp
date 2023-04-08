@@ -215,14 +215,19 @@ public:
     {
         /** Enable logging. */
         bool on = true;
+
         /** Enable writing logs to standard error output. */
         bool log2stderr = false;
+
         /** Log file. */
         std::ofstream log_file;
+
         /** Path to the log file. */
         std::string log_path;
+
         /** Current level of the logs. */
         int level = 0;
+
         /** Maximum level of the logs. */
         int maximum_log_level = 999;
     };
@@ -237,22 +242,30 @@ public:
     {
         /** Output stream. */
         OutputStream os;
+
 #if FFOT_USE_JSON == 1
         /** JSON output file. */
         nlohmann::json json;
 #endif
+
         /** Verbose level. */
         int verbosity_level = 0;
+
         /** Only write outputs at the end of the algorithm. */
         bool only_write_at_the_end = true;
+
         /** Path to the JSON output file. */
         std::string json_output_path  = "";
+
         /** Path to the certificate file. */
         std::string certificate_path = "";
+
         /** Mutex. */
         std::mutex mutex;
+
         /** Counter for the number of solutions. */
         int number_of_solutions = 0;
+
         /** Counter for the number of bounds. */
         int number_of_bounds = 0;
     };
@@ -278,7 +291,10 @@ public:
      *
      * Note that Info(info, false, "newthread") keeps the time limit.
      */
-    Info(const Info& info, bool keep_output, std::string keep_logger);
+    Info(
+            const Info& info,
+            bool keep_output,
+            std::string keep_logger);
 
     /*
      * Getters.

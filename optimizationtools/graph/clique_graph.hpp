@@ -28,10 +28,13 @@ public:
     {
         /** Unique id of the vertex. */
         VertexId id;
+
         /** Weight of the vertex. */
         Weight weight = 1;
+
         /** Degree of the vertex. */
         VertexPos degree = 0;
+
         /** Cliques to which the vertex belongs. */
         std::vector<CliqueId> cliques;
     };
