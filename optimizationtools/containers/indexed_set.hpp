@@ -40,6 +40,15 @@ public:
     inline bool empty() const { return number_of_elements_ == 0; }
     inline Position size() const { return number_of_elements_; }
     inline bool contains(Index index) const { return (positions_[index] < number_of_elements_); }
+
+    inline bool contains(const std::vector<Index>& indices) const
+    {
+        for (Index index: indices)
+            if (!contains(index))
+                return false;
+        return true;
+    }
+
     inline Position position(Index index) const { return positions_[index]; }
 
     inline std::vector<Index>::const_iterator begin() const { return elements_.begin(); }
