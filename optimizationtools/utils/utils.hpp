@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <random>
 #include <sstream>
+#include <iterator>
 
 namespace optimizationtools
 {
@@ -10,7 +11,17 @@ namespace optimizationtools
 template <typename T>
 std::vector<T> bob_floyd(T sample_size, T upper_bound, std::mt19937_64& generator);
 
-inline std::vector<std::string> split(std::string line, char c = ',');
+/**
+ * Split a string by whitespace.
+ */
+inline std::vector<std::string> split(std::string line);
+
+/**
+ * Split a string according to a given separator.
+ *
+ * Whitespaces are trimmed.
+ */
+inline std::vector<std::string> split(std::string line, char c);
 
 inline void hash_combine(std::size_t& seed, const size_t v);
 
@@ -54,6 +65,14 @@ static inline void rtrim(std::string &s)
     s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
         return !std::isspace(ch);
     }).base(), s.end());
+}
+
+std::vector<std::string> split(std::string line)
+{
+    std::istringstream buffer(line);
+    return {
+        std::istream_iterator<std::string>(buffer),
+        std::istream_iterator<std::string>()};
 }
 
 std::vector<std::string> split(std::string line, char c)
