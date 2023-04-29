@@ -12,7 +12,7 @@ class AdjacencyListGraph: public AbstractGraph
 public:
 
     /*
-     * Structures.
+     * Structures
      */
 
     /**
@@ -21,10 +21,10 @@ public:
     struct VertexEdge
     {
         /** Id of the edge. */
-        EdgeId e;
+        EdgeId edge_id;
 
         /** Id of the neighbor. */
-        VertexId v;
+        VertexId vertex_id;
     };
 
     /**
@@ -32,9 +32,6 @@ public:
      */
     struct Vertex
     {
-        /** Unique id of the vertex. */
-        VertexId id;
-
         /** Weight of the vertex. */
         Weight weight = 1;
 
@@ -53,22 +50,21 @@ public:
      */
     struct Edge
     {
-        /** Unique id of the edge. */
-        EdgeId id;
-
         /** First end of the edge. */
-        VertexId v1;
+        VertexId vertex_id_1;
 
         /** Second end of the edge. */
-        VertexId v2;
+        VertexId vertex_id_2;
     };
 
     /*
-     * Constructors destructor.
+     * Constructors destructor
      */
 
     /** Create a graph from a file. */
-    AdjacencyListGraph(std::string instance_path, std::string format);
+    AdjacencyListGraph(
+            std::string instance_path,
+            std::string format);
 
     /** Constructor. */
     AdjacencyListGraph(VertexId number_of_vertices = 0);
@@ -76,14 +72,18 @@ public:
     /** Add a vertex. */
     virtual VertexId add_vertex(Weight weight = 1);
 
-    /** Set the weight of vertex 'v' to 'weight'. */
-    void set_weight(VertexId v, Weight weight);
+    /** Set the weight of a vertex. */
+    void set_weight(
+            VertexId vertex_id,
+            Weight weight);
 
     /** Set the weight of all vertices to 1. */
     void set_unweighted();
 
     /** Add an edge. */
-    EdgeId add_edge(VertexId v1, VertexId v2);
+    EdgeId add_edge(
+            VertexId vertex_id_1,
+            VertexId vertex_id_2);
 
     /** Clear graph, i.e. remove vertices and edges. */
     void clear();
@@ -107,48 +107,52 @@ public:
     }
 
     /*
-     * Getters.
+     * Getters
      */
 
     inline VertexPos number_of_vertices() const override { return vertices_.size(); }
 
-    virtual VertexPos number_of_edges() const override { return number_of_edges_; }
+    inline virtual VertexPos number_of_edges() const override { return number_of_edges_; }
 
-    inline VertexId degree(VertexId v) const override { return vertices_[v].edges.size(); }
+    inline VertexId degree(VertexId vertex_id) const override { return vertices_[vertex_id].edges.size(); }
 
-    virtual VertexPos maximum_degree() const override { return maximum_degree_; }
+    inline virtual VertexPos maximum_degree() const override { return maximum_degree_; }
 
-    inline Weight weight(VertexId v) const override { return vertices_[v].weight; }
+    inline Weight weight(VertexId vertex_id) const override { return vertices_[vertex_id].weight; }
 
     virtual Weight total_weight() const override { return total_weight_; };
 
-    const_iterator neighbors_begin(VertexId v) const override
+    const_iterator neighbors_begin(VertexId vertex_id) const override
     {
-        return vertices_[v].neighbors.begin();
+        return vertices_[vertex_id].neighbors.begin();
     }
 
-    const_iterator neighbors_end(VertexId v) const override
+    const_iterator neighbors_end(VertexId vertex_id) const override
     {
-        return vertices_[v].neighbors.end();
+        return vertices_[vertex_id].neighbors.end();
     }
 
-    /** Get the first end of edge 'e'. */
-    inline VertexId first_end(EdgeId e) const { return edges_[e].v1; }
+    /** Get the first end of an edge. */
+    inline VertexId first_end(EdgeId edge_id) const { return edges_[edge_id].vertex_id_1; }
 
-    /** Get the second end of edge 'e'.  */
-    inline VertexId second_end(EdgeId e) const { return edges_[e].v2; }
+    /** Get the second end of an edge.  */
+    inline VertexId second_end(EdgeId edge_id) const { return edges_[edge_id].vertex_id_2; }
 
-    /** Get the end of edge 'e' which is not 'v'. */
-    inline VertexId other_end(EdgeId e, VertexId v) const
+    /** Get the other end of an edge. */
+    inline VertexId other_end(
+            EdgeId edge_id,
+            VertexId vertex_id) const
     {
-        return (v == edges_[e].v1)? edges_[e].v2: edges_[e].v1;
+        return (vertex_id == edges_[edge_id].vertex_id_1)?
+            edges_[edge_id].vertex_id_2:
+            edges_[edge_id].vertex_id_1;
     }
 
-    /** The the list of edges incident to vertex 'v'. */
-    inline const std::vector<VertexEdge>& edges(VertexId v) const { return vertices_[v].edges; }
+    /** Get the list of edges incident to a vertex. */
+    inline const std::vector<VertexEdge>& edges(VertexId vertex_id) const { return vertices_[vertex_id].edges; }
 
     /*
-     * Export.
+     * Export
      */
 
     /** Write the graph to a file. */
@@ -157,7 +161,7 @@ public:
 private:
 
     /*
-     * Private attributes.
+     * Private attributes
      */
 
     /** Vertices. */
@@ -176,7 +180,7 @@ private:
     Weight total_weight_ = 0;
 
     /*
-     * Private methods.
+     * Private methods
      */
 
     /** Read a graph in 'dimacs1992' format. */

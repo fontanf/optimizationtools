@@ -36,7 +36,7 @@ void CliqueGraph::read_cliquegraph(std::ifstream& file)
 
     file >> tmp >> number_of_cliques >> tmp >> n;
 
-    for (VertexId v = 0; v < n; ++v)
+    for (VertexId vertex_id = 0; vertex_id < n; ++vertex_id)
         add_vertex();
 
     getline(file, tmp);
@@ -52,13 +52,16 @@ void CliqueGraph::read_cliquegraph(std::ifstream& file)
 
 VertexId CliqueGraph::add_vertex(Weight weight)
 {
+    VertexId vertex_id = vertices_.size();
+
     Vertex vertex;
-    vertex.id = vertices_.size();
     vertex.weight = weight;
     vertices_.push_back(vertex);
+
     total_weight_ += weight;
     neighbors_tmp_.add_element();
-    return vertex.id;
+
+    return vertex_id;
 }
 
 CliqueId CliqueGraph::add_clique()
@@ -73,26 +76,28 @@ CliqueId CliqueGraph::add_clique(
 {
     CliqueId id = cliques_.size();
     cliques_.push_back(clique);
-    for (VertexId v: clique) {
-        vertices_[v].cliques.push_back(id);
-        vertices_[v].degree += clique.size() - 1;
-        if (maximum_degree_ < degree(v))
-            maximum_degree_ = degree(v);
+    for (VertexId vertex_id: clique) {
+        vertices_[vertex_id].cliques.push_back(id);
+        vertices_[vertex_id].degree += clique.size() - 1;
+        if (maximum_degree_ < degree(vertex_id))
+            maximum_degree_ = degree(vertex_id);
     }
     number_of_edges_ += clique.size() * (clique.size() - 1) / 2;
     return id;
 }
 
-void CliqueGraph::add_vertex_to_clique(CliqueId clique_id, VertexId v)
+void CliqueGraph::add_vertex_to_clique(
+        CliqueId clique_id,
+        VertexId vertex_id)
 {
     number_of_edges_ += cliques_[clique_id].size();
-    for (VertexId v2: cliques_[clique_id])
-        vertices_[v2].degree++;
-    vertices_[v].degree += cliques_[clique_id].size();
-    vertices_[v].cliques.push_back(clique_id);
-    cliques_[clique_id].push_back(v);
+    for (VertexId vertex_id_2: cliques_[clique_id])
+        vertices_[vertex_id_2].degree++;
+    vertices_[vertex_id].degree += cliques_[clique_id].size();
+    vertices_[vertex_id].cliques.push_back(clique_id);
+    cliques_[clique_id].push_back(vertex_id);
 
-    for (VertexId v2: cliques_[clique_id])
-        if (maximum_degree_ < degree(v2))
-            maximum_degree_ = degree(v2);
+    for (VertexId vertex_id_2: cliques_[clique_id])
+        if (maximum_degree_ < degree(vertex_id_2))
+            maximum_degree_ = degree(vertex_id_2);
 }

@@ -14,7 +14,7 @@ class AdjacencyMatrixGraph: public AbstractGraph
 public:
 
     /*
-     * Structures.
+     * Structures
      */
 
     /**
@@ -22,16 +22,15 @@ public:
      */
     struct Vertex
     {
-        /** Unique id of the vertex. */
-        VertexId id;
         /** Weight of the vertex. */
         Weight weight = 1;
+
         /** Degree of the vertex. */
         VertexPos degree = 0;
     };
 
     /*
-     * Constructors and destructor.
+     * Constructors and destructor
      */
 
     /** Constructor. */
@@ -43,31 +42,37 @@ public:
     /** Add a vertex. */
     VertexId add_vertex(Weight weight = 1)
     {
+        VertexId vertex_id = vertices_.size();
+
         Vertex vertex;
-        vertex.id = vertices_.size();
         vertex.weight = weight;
         vertices_.push_back(vertex);
-        adjacency_matrix_.push_back(std::vector<bool>(vertex.id));
+
+        adjacency_matrix_.push_back(std::vector<bool>(vertex_id));
         total_weight_ += weight;
-        return vertex.id;
+        return vertex_id;
     }
 
     /** Add an edge. */
-    void add_edge(VertexId v1, VertexId v2)
+    void add_edge(
+            VertexId vertex_id_1,
+            VertexId vertex_id_2)
     {
-        adjacency_matrix_[std::max(v1, v2)][std::min(v1, v2)] = true;
+        adjacency_matrix_[std::max(vertex_id_1, vertex_id_2)][std::min(vertex_id_1, vertex_id_2)] = true;
         number_of_edges_++;
-        vertices_[v1].degree++;
-        vertices_[v2].degree++;
+        vertices_[vertex_id_1].degree++;
+        vertices_[vertex_id_2].degree++;
     }
 
     /** Remove an edge. */
-    void remove_edge(VertexId v1, VertexId v2)
+    void remove_edge(
+            VertexId vertex_id_1,
+            VertexId vertex_id_2)
     {
-        adjacency_matrix_[std::max(v1, v2)][std::min(v1, v2)] = false;
+        adjacency_matrix_[std::max(vertex_id_1, vertex_id_2)][std::min(vertex_id_1, vertex_id_2)] = false;
         number_of_edges_--;
-        vertices_[v1].degree--;
-        vertices_[v2].degree--;
+        vertices_[vertex_id_1].degree--;
+        vertices_[vertex_id_2].degree--;
     }
 
     virtual AdjacencyMatrixGraph* clone() const override
@@ -76,7 +81,7 @@ public:
     }
 
     /*
-     * Getters.
+     * Getters
      */
 
     inline VertexPos number_of_vertices() const override { return vertices_.size(); }
@@ -91,12 +96,12 @@ public:
 
     virtual Weight total_weight() const override { return total_weight_; };
 
-    virtual const_iterator neighbors_begin(VertexId v) const override
+    virtual const_iterator neighbors_begin(VertexId vertex_id) const override
     {
         neighbors_tmp_.clear();
-        for (VertexId v2 = 0; v2 < number_of_vertices(); ++v2)
-            if (has_edge(v, v2))
-                neighbors_tmp_.push_back(v2);
+        for (VertexId vertex_id_2 = 0; vertex_id_2 < number_of_vertices(); ++vertex_id_2)
+            if (has_edge(vertex_id, vertex_id_2))
+                neighbors_tmp_.push_back(vertex_id_2);
         return neighbors_tmp_.begin();
     }
 
@@ -106,17 +111,19 @@ public:
     }
 
     /**
-     * Return 'true' iff there is an edge between vertex 'v1' and vertex 'v2'.
+     * Return 'true' iff there is an edge between two vertices exists.
      */
-    bool has_edge(VertexId v1, VertexId v2) const
+    bool has_edge(
+            VertexId vertex_id_1,
+            VertexId vertex_id_2) const
     {
-        return adjacency_matrix_[std::max(v1, v2)][std::min(v1, v2)];
+        return adjacency_matrix_[std::max(vertex_id_1, vertex_id_2)][std::min(vertex_id_1, vertex_id_2)];
     }
 
 private:
 
     /*
-     * Private attributes.
+     * Private attributes
      */
 
     /** Vertices. */

@@ -21,7 +21,7 @@ class AbstractGraph
 public:
 
     /*
-     * Constructors and destructor.
+     * Constructors and destructor
      */
 
     /** Constructor. */
@@ -34,7 +34,7 @@ public:
     virtual AbstractGraph* clone() const = 0;
 
     /*
-     * Getters.
+     * Getters
      */
 
     /** Get the number of vertices. */
@@ -61,24 +61,24 @@ public:
      * Returns an iterator pointing to the first element in the neighbors of
      * vertex 'v'.
      */
-    virtual const_iterator neighbors_begin(VertexId v) const = 0;
+    virtual const_iterator neighbors_begin(VertexId vertex_id) const = 0;
 
     /**
      * Returns an iterator referring to the past-the-end element in neighbors
      * of vertex 'v'.
      */
-    virtual const_iterator neighbors_end(VertexId v) const = 0;
+    virtual const_iterator neighbors_end(VertexId vertex_id) const = 0;
 
     /*
-     * Checkers.
+     * Checkers
      */
 
     /** Check if vertex index 'v' is within the correct range. */
-    inline void check_vertex_index(VertexId v) const
+    inline void check_vertex_index(VertexId vertex_id) const
     {
-        if (v < 0 || v >= number_of_vertices())
+        if (vertex_id < 0 || vertex_id >= number_of_vertices())
             throw std::out_of_range(
-                    "Invalid vertex index: \"" + std::to_string(v) + "\"."
+                    "Invalid vertex index: \"" + std::to_string(vertex_id) + "\"."
                     + " Vertex indices should belong to [0, "
                     + std::to_string(number_of_vertices() - 1) + "].");
     }

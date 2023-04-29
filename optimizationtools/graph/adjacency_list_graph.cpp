@@ -35,56 +35,64 @@ AdjacencyListGraph::AdjacencyListGraph(
 
 VertexId AdjacencyListGraph::add_vertex(Weight weight)
 {
+    VertexId vertex_id = vertices_.size();
+
     Vertex vertex;
-    vertex.id = vertices_.size();
     vertex.weight = weight;
     vertices_.push_back(vertex);
+
     total_weight_ += weight;
-    return vertex.id;
+    return vertex_id;
 }
 
-void AdjacencyListGraph::set_weight(VertexId v, Weight weight)
+void AdjacencyListGraph::set_weight(
+        VertexId vertex_id,
+        Weight weight)
 {
-    total_weight_ -= vertices_[v].weight;
-    vertices_[v].weight = weight;
-    total_weight_ += vertices_[v].weight;
+    total_weight_ -= vertices_[vertex_id].weight;
+    vertices_[vertex_id].weight = weight;
+    total_weight_ += vertices_[vertex_id].weight;
 };
 
 void AdjacencyListGraph::set_unweighted()
 {
-    for (VertexId v = 0; v < number_of_vertices(); ++v)
-        set_weight(v, 1);
+    for (VertexId vertex_id = 0;
+            vertex_id < number_of_vertices();
+            ++vertex_id) {
+        set_weight(vertex_id, 1);
+    }
 }
 
-EdgeId AdjacencyListGraph::add_edge(VertexId v1, VertexId v2)
+EdgeId AdjacencyListGraph::add_edge(VertexId vertex_id_1, VertexId vertex_id_2)
 {
-    if (v1 == v2) {
+    if (vertex_id_1 == vertex_id_2) {
         return -1;
     }
 
+    EdgeId edge_id = edges_.size();
+
     Edge edge;
-    edge.id = edges_.size();
-    edge.v1 = v1;
-    edge.v2 = v2;
+    edge.vertex_id_1 = vertex_id_1;
+    edge.vertex_id_2 = vertex_id_2;
     edges_.push_back(edge);
 
     VertexEdge ve1;
-    ve1.e = edge.id;
-    ve1.v = v2;
-    vertices_[v1].edges.push_back(ve1);
-    vertices_[v1].neighbors.push_back(v2);
+    ve1.edge_id = edge_id;
+    ve1.vertex_id = vertex_id_2;
+    vertices_[vertex_id_1].edges.push_back(ve1);
+    vertices_[vertex_id_1].neighbors.push_back(vertex_id_2);
 
     VertexEdge ve2;
-    ve2.e = edge.id;
-    ve2.v = v1;
-    vertices_[v2].edges.push_back(ve2);
-    vertices_[v2].neighbors.push_back(v1);
+    ve2.edge_id = edge_id;
+    ve2.vertex_id = vertex_id_1;
+    vertices_[vertex_id_2].edges.push_back(ve2);
+    vertices_[vertex_id_2].neighbors.push_back(vertex_id_1);
 
     number_of_edges_++;
-    if (maximum_degree_ < std::max(degree(v1), degree(v2)))
-        maximum_degree_ = std::max(degree(v1), degree(v2));
+    if (maximum_degree_ < std::max(degree(vertex_id_1), degree(vertex_id_2)))
+        maximum_degree_ = std::max(degree(vertex_id_1), degree(vertex_id_2));
 
-    return edge.id;
+    return edge_id;
 }
 
 void AdjacencyListGraph::clear()
@@ -101,51 +109,64 @@ void AdjacencyListGraph::clear_edges()
     edges_.clear();
     maximum_degree_ = 0;
     number_of_edges_ = 0;
-    for (VertexId v = 0; v < number_of_vertices(); ++v) {
-        vertices_[v].edges.clear();
-        vertices_[v].neighbors.clear();
+    for (VertexId vertex_id = 0;
+            vertex_id < number_of_vertices();
+            ++vertex_id) {
+        vertices_[vertex_id].edges.clear();
+        vertices_[vertex_id].neighbors.clear();
     }
 }
 
 void AdjacencyListGraph::remove_duplicate_edges()
 {
     std::vector<std::vector<VertexId>> neighbors(number_of_vertices());
-    for (VertexId v = 0; v < number_of_vertices(); ++v) {
-        for (VertexId v_neighbor: vertices_[v].neighbors)
-            if (v_neighbor > v)
-                neighbors[v].push_back(v_neighbor);
-        sort(neighbors[v].begin(), neighbors[v].end());
-        neighbors[v].erase(
+    for (VertexId vertex_id = 0;
+            vertex_id < number_of_vertices();
+            ++vertex_id) {
+        for (VertexId vertex_id_neighbor: vertices_[vertex_id].neighbors)
+            if (vertex_id_neighbor > vertex_id)
+                neighbors[vertex_id].push_back(vertex_id_neighbor);
+        sort(neighbors[vertex_id].begin(), neighbors[vertex_id].end());
+        neighbors[vertex_id].erase(
                 std::unique(
-                    neighbors[v].begin(),
-                    neighbors[v].end()),
-                neighbors[v].end());
+                    neighbors[vertex_id].begin(),
+                    neighbors[vertex_id].end()),
+                neighbors[vertex_id].end());
     }
     clear_edges();
-    for (VertexId v1 = 0; v1 < number_of_vertices(); ++v1)
-        for (VertexId v2: neighbors[v1])
-            add_edge(v1, v2);
+    for (VertexId vertex_id_1 = 0;
+            vertex_id_1 < number_of_vertices();
+            ++vertex_id_1) {
+        for (VertexId vertex_id_2: neighbors[vertex_id_1])
+            add_edge(vertex_id_1, vertex_id_2);
+    }
 }
 
 AdjacencyListGraph::AdjacencyListGraph(VertexId number_of_vertices)
 {
-    for (VertexId v = 0; v < number_of_vertices; ++v)
+    for (VertexId vertex_id = 0;
+            vertex_id < number_of_vertices;
+            ++vertex_id) {
         add_vertex();
+    }
 }
 
 AdjacencyListGraph AdjacencyListGraph::complementary() const
 {
     AdjacencyListGraph graph(number_of_vertices());
     optimizationtools::IndexedSet neighbors(number_of_vertices());
-    for (VertexId v = 0; v < number_of_vertices(); ++v) {
+    for (VertexId vertex_id = 0;
+            vertex_id < number_of_vertices();
+            ++vertex_id) {
         neighbors.clear();
-        for (auto it = neighbors_begin(v);
-                it != neighbors_end(v); ++it) {
+        for (auto it = neighbors_begin(vertex_id);
+                it != neighbors_end(vertex_id);
+                ++it) {
             neighbors.add(*it);
         }
         for (auto it = neighbors.out_begin(); it != neighbors.out_end(); ++it)
-            if (*it > v)
-                graph.add_edge(v, *it);
+            if (*it > vertex_id)
+                graph.add_edge(vertex_id, *it);
     }
     return graph;
 }
@@ -153,13 +174,19 @@ AdjacencyListGraph AdjacencyListGraph::complementary() const
 AdjacencyListGraph::AdjacencyListGraph(
         const AbstractGraph& abstract_graph)
 {
-    for (VertexId v = 0; v < abstract_graph.number_of_vertices(); ++v)
+    for (VertexId vertex_id = 0;
+            vertex_id < abstract_graph.number_of_vertices();
+            ++vertex_id) {
         add_vertex();
-    for (VertexId v = 0; v < abstract_graph.number_of_vertices(); ++v) {
-        for (auto it = abstract_graph.neighbors_begin(v);
-                it != abstract_graph.neighbors_end(v); ++it) {
-            if (v > *it)
-                add_edge(v, *it);
+    }
+    for (VertexId vertex_id = 0;
+            vertex_id < abstract_graph.number_of_vertices();
+            ++vertex_id) {
+        for (auto it = abstract_graph.neighbors_begin(vertex_id);
+                it != abstract_graph.neighbors_end(vertex_id);
+                ++it) {
+            if (vertex_id > *it)
+                add_edge(vertex_id, *it);
         }
     }
 }
@@ -175,16 +202,19 @@ void AdjacencyListGraph::read_dimacs1992(std::ifstream& file)
         } else if (line[0] == "c") {
         } else if (line[0] == "p") {
             VertexId number_of_vertices = stol(line[2]);
-            for (VertexId v = 0; v < number_of_vertices; ++v)
+            for (VertexId vertex_id = 0;
+                    vertex_id < number_of_vertices;
+                    ++vertex_id) {
                 add_vertex();
+            }
         } else if (line[0] == "n") {
-            VertexId v = stol(line[1]) - 1;
-            Weight w = stol(line[2]);
-            set_weight(v, w);
+            VertexId vertex_id = stol(line[1]) - 1;
+            Weight weight = stol(line[2]);
+            set_weight(vertex_id, weight);
         } else if (line[0] == "e") {
-            VertexId v1 = stol(line[1]) - 1;
-            VertexId v2 = stol(line[2]) - 1;
-            add_edge(v1, v2);
+            VertexId vertex_id_1 = stol(line[1]) - 1;
+            VertexId vertex_id_2 = stol(line[2]) - 1;
+            add_edge(vertex_id_1, vertex_id_2);
         }
     }
 }
@@ -194,8 +224,8 @@ void AdjacencyListGraph::read_dimacs2010(std::ifstream& file)
     std::string tmp;
     std::vector<std::string> line;
     bool first = true;
-    VertexId v = -1;
-    while (v != number_of_vertices()) {
+    VertexId vertex_id = -1;
+    while (vertex_id != number_of_vertices()) {
         getline(file, tmp);
         //std::cout << tmp << std::endl;
         line = optimizationtools::split(tmp, ' ');
@@ -203,17 +233,20 @@ void AdjacencyListGraph::read_dimacs2010(std::ifstream& file)
             continue;
         if (first) {
             VertexId number_of_vertices = stol(line[0]);
-            for (VertexId v = 0; v < number_of_vertices; ++v)
+            for (VertexId vertex_id = 0;
+                    vertex_id < number_of_vertices;
+                    ++vertex_id) {
                 add_vertex();
+            }
             first = false;
-            v = 0;
+            vertex_id = 0;
         } else {
             for (std::string str: line) {
-                VertexId v2 = stol(str) - 1;
-                if (v2 > v)
-                    add_edge(v, v2);
+                VertexId vertex_id_2 = stol(str) - 1;
+                if (vertex_id_2 > vertex_id)
+                    add_edge(vertex_id, vertex_id_2);
             }
-            v++;
+            vertex_id++;
         }
     }
 }
@@ -226,17 +259,20 @@ void AdjacencyListGraph::read_matrixmarket(std::ifstream& file)
         getline(file, tmp);
     } while (tmp[0] == '%');
     std::stringstream ss(tmp);
-    VertexId n = -1;
-    ss >> n;
-    for (VertexId v = 0; v < n; ++v)
+    VertexId number_of_vertices = -1;
+    ss >> number_of_vertices;
+    for (VertexId vertex_id = 0;
+            vertex_id < number_of_vertices;
+            ++vertex_id) {
         add_vertex();
+    }
 
-    VertexId v1 = -1;
-    VertexId v2 = -1;
+    VertexId vertex_id_1 = -1;
+    VertexId vertex_id_2 = -1;
     while (getline(file, tmp)) {
         std::stringstream ss(tmp);
-        ss >> v1 >> v2;
-        add_edge(v1 - 1, v2 - 1);
+        ss >> vertex_id_1 >> vertex_id_2;
+        add_edge(vertex_id_1 - 1, vertex_id_2 - 1);
     }
 }
 
@@ -248,16 +284,21 @@ void AdjacencyListGraph::read_chaco(std::ifstream& file)
     getline(file, tmp);
     line = optimizationtools::split(tmp, ' ');
     VertexId number_of_vertices = stol(line[0]);
-    for (VertexId v = 0; v < number_of_vertices; ++v)
+    for (VertexId vertex_id = 0;
+            vertex_id < number_of_vertices;
+            ++vertex_id) {
         add_vertex();
+    }
 
-    for (VertexId v = 0; v < number_of_vertices; ++v) {
+    for (VertexId vertex_id = 0;
+            vertex_id < number_of_vertices;
+            ++vertex_id) {
         getline(file, tmp);
         line = optimizationtools::split(tmp, ' ');
         for (std::string str: line) {
-            VertexId v2 = stol(str) - 1;
-            if (v2 > v)
-                add_edge(v, v2);
+            VertexId vertex_id_2 = stol(str) - 1;
+            if (vertex_id_2 > vertex_id)
+                add_edge(vertex_id, vertex_id_2);
         }
     }
 }
@@ -270,15 +311,15 @@ void AdjacencyListGraph::read_snap(std::ifstream& file)
         getline(file, tmp);
     } while (tmp[0] == '#');
 
-    VertexId v1 = -1;
-    VertexId v2 = -1;
+    VertexId vertex_id_1 = -1;
+    VertexId vertex_id_2 = -1;
     for (;;) {
-        file >> v1 >> v2;
+        file >> vertex_id_1 >> vertex_id_2;
         if (file.eof())
             break;
-        while (std::max(v1, v2) >= number_of_vertices())
+        while (std::max(vertex_id_1, vertex_id_2) >= number_of_vertices())
             add_vertex();
-        add_edge(v1, v2);
+        add_edge(vertex_id_1, vertex_id_2);
     }
 }
 
@@ -305,8 +346,8 @@ void AdjacencyListGraph::write(
 
 void AdjacencyListGraph::write_snap(std::ofstream& file)
 {
-    for (EdgeId e = 0; e < number_of_edges(); ++e)
-        file << first_end(e) << " " << second_end(e) << std::endl;
+    for (EdgeId edge_id = 0; edge_id < number_of_edges(); ++edge_id)
+        file << first_end(edge_id) << " " << second_end(edge_id) << std::endl;
 }
 
 void AdjacencyListGraph::write_matrixmarket(std::ofstream& file)
@@ -315,13 +356,19 @@ void AdjacencyListGraph::write_matrixmarket(std::ofstream& file)
         << " " << number_of_vertices()
         << " " << number_of_edges()
         << std::endl;
-    for (EdgeId e = 0; e < number_of_edges(); ++e)
-        file << first_end(e) + 1 << " " << second_end(e) + 1 << std::endl;
+    for (EdgeId edge_id = 0; edge_id < number_of_edges(); ++edge_id) {
+        file << first_end(edge_id) + 1
+            << " " << second_end(edge_id) + 1
+            << std::endl;
+    }
 }
 
 void AdjacencyListGraph::write_dimacs(std::ofstream& file)
 {
     file << "p edge " << number_of_vertices() << " " << number_of_edges() << std::endl;
-    for (EdgeId e = 0; e < number_of_edges(); ++e)
-        file << "e " << first_end(e) + 1 << " " << second_end(e) + 1 << std::endl;
+    for (EdgeId edge_id = 0; edge_id < number_of_edges(); ++edge_id) {
+        file << "e " << first_end(edge_id) + 1
+            << " " << second_end(edge_id) + 1
+            << std::endl;
+    }
 }
