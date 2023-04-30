@@ -34,6 +34,19 @@ int orientation(T x1, T y1, T x2, T y2, T x3, T y3);
 template <typename T>
 bool intersect(T x11, T y11, T x12, T y12, T x21, T y21, T x22, T y22);
 
+template <typename T>
+struct Ratio
+{
+    Ratio(T v1, T v2): v1(v1), v2(v2) { }
+
+    T v1;
+    T v2;
+};
+
+/** Output "'v1' / 'v2' ('v1/v2*100'%)". */
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Ratio<T>& ratio);
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -149,6 +162,13 @@ bool intersect(T x11, T y11, T x12, T y12, T x21, T y21, T x22, T y22)
     if (o4 == 0 && on_segment(x21, y21, x12, y12, x22, y22))
         return true;
     return false;
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Ratio<T>& ratio)
+{
+    os << ratio.v1 << " / " << ratio.v2 << " (" << (double)ratio.v1 / ratio.v2 * 100 << "%)";
+    return os;
 }
 
 }
