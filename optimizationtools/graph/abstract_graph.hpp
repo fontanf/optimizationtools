@@ -43,14 +43,28 @@ public:
     /** Get the number of edges. */
     virtual VertexPos number_of_edges() const = 0;
 
-    /** Get the degree of vertex 'v'. */
-    virtual VertexPos degree(VertexId v) const = 0;
+    /** Get the degree of a vertex. */
+    virtual VertexPos degree(VertexId vertex_id) const = 0;
+
+    /** Get the density of the graph. */
+    inline double density() const
+    {
+        return (double)number_of_edges() * 2
+            / number_of_vertices()
+            / number_of_vertices();
+    }
+
+    /** Get the average degree of the graph. */
+    inline double average_degree() const
+    {
+        return (double)number_of_edges() * 2 / number_of_vertices();
+    }
 
     /** Get the maximum degree of the graph. */
     virtual VertexPos maximum_degree() const = 0;
 
-    /** Get the weight of vertex 'v'. */
-    virtual Weight weight(VertexId v) const = 0;
+    /** Get the weight of a vertex. */
+    virtual Weight weight(VertexId vertex_id) const = 0;
 
     /** Get the total weight of the graph. */
     virtual Weight total_weight() const = 0;
