@@ -45,7 +45,31 @@ struct Ratio
 
 /** Output "'v1' / 'v2' ('v1/v2*100'%)". */
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const Ratio<T>& ratio);
+std::ostream& operator<<(
+        std::ostream& os,
+        const Ratio<T>& ratio);
+
+enum class ObjectiveDirection { Minimize, Maximize };
+
+template <typename T>
+std::string solution_value(
+        ObjectiveDirection objective_direction,
+        bool solution_feasible,
+        T solution_value);
+
+template <typename T>
+double absolute_optimality_gap(
+        ObjectiveDirection objective_direction,
+        bool solution_feasible,
+        T solution_value,
+        T bound);
+
+template <typename T>
+double relative_optimality_gap(
+        ObjectiveDirection objective_direction,
+        bool solution_feasible,
+        T solution_value,
+        T bound);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -165,10 +189,55 @@ bool intersect(T x11, T y11, T x12, T y12, T x21, T y21, T x22, T y22)
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const Ratio<T>& ratio)
+std::ostream& operator<<(
+        std::ostream& os,
+        const Ratio<T>& ratio)
 {
     os << ratio.v1 << " / " << ratio.v2 << " (" << (double)ratio.v1 / ratio.v2 * 100 << "%)";
     return os;
+}
+
+template <typename T>
+std::string solution_value(
+        ObjectiveDirection objective_direction,
+        bool solution_feasible,
+        T solution_value)
+{
+    if (!solution_feasible)
+        return (objective_direction == ObjectiveDirection::Minimize)? "inf": "-inf";
+    std::stringstream ss;
+    ss << solution_value;
+    return ss.str();
+}
+
+template <typename T>
+double absolute_optimality_gap(
+        ObjectiveDirection objective_direction,
+        bool solution_feasible,
+        T solution_value,
+        T bound)
+{
+    if (!solution_feasible)
+        return std::numeric_limits<double>::infinity();
+    return (objective_direction == ObjectiveDirection::Minimize)?
+        (double)(solution_value - bound):
+        (double)(bound - solution_value);
+}
+
+template <typename T>
+double relative_optimality_gap(
+        ObjectiveDirection objective_direction,
+        bool solution_feasible,
+        T solution_value,
+        T bound)
+{
+    if (!solution_feasible)
+        return std::numeric_limits<double>::infinity();
+    if (bound == 0)
+        return std::numeric_limits<double>::infinity();
+    return (objective_direction == ObjectiveDirection::Minimize)?
+        (double)(solution_value - bound) / bound:
+        (double)(bound - solution_value) / bound;
 }
 
 }
