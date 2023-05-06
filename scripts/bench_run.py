@@ -20,14 +20,22 @@ def run(main_exec,
     reader = csv.DictReader(open(datacsv_path))  # noqa: F841
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
 
+    # Get fieldnames
+    with open(datacsv_path, "r") as f:
+        csv_reader_tmp = csv.reader(f)
+        fieldnames = next(csv_reader_tmp)
+
     directory_out = os.path.join("output", label)
     if not os.path.exists(directory_out):
         os.makedirs(directory_out)
 
     new_bks = {}
     new_bkb = {}
+    rows_new = []
 
     for row in rows_filtered:
+        rows_new.append(row)
+
         instance_path = os.path.join(
                 directory_in, row["Path"])
         json_output_path = os.path.join(
@@ -73,8 +81,20 @@ def run(main_exec,
         json_reader = json.load(json_file)
         p = (row["Dataset"], row["Path"])
 
+        # Update fieldnames.
+        if len(rows_new) == 1:
+            if "Solution" in json_reader.keys():
+                for key in json_reader["Solution"].keys():
+                    fieldnames.append(key)
+        if "Solution" in json_reader.keys():
+            for key, value in json_reader["Solution"].items():
+                rows_new[-1][key] = value
+
         # Update best known solution.
-        if "Solution" in json_reader:
+        if (
+                "Solution" in json_reader
+                and ("Feasible" not in json_reader["Solution"]
+                     or json_reader["Solution"]["Feasible"])):
             primal_str = json_reader["Solution"]["Value"]
             primal_str = str(primal_str)
             if "," in primal_str:
@@ -129,6 +149,16 @@ def run(main_exec,
             if update:
                 new_bkb[p] = dual
 
+    # Write CSV summary.
+    summarycsv_path = os.path.join(
+                directory_out, row["Dataset"], "summary.csv")
+    with open(summarycsv_path, 'w') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows_new:
+            writer.writerow(row)
+
+    # Update input CSV file if new bests have been found.
     if len(new_bks) > 0 or len(new_bks) > 0:
         date = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M")
         datacsv_path_back = datacsv_path + "_back_" + date

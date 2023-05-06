@@ -3,6 +3,7 @@ import os.path
 import argparse
 import json
 import csv
+import pandas as pd
 import math
 import datetime
 import matplotlib
@@ -23,6 +24,7 @@ def process(
         datacsv_path,
         benchmark,
         labels,
+        results,
         instance_filter,
         timelimit,
         objective_sense="min",
@@ -34,11 +36,17 @@ def process(
     print("filter:", instance_filter)
     print("timelimit:", timelimit)
     objective_sense_field = "Objective sense"
-    reader = csv.DictReader(open(datacsv_path))
+    reader = csv.DictReader(open(datacsv_path))  # noqa: F841
     rows_filtered = eval("filter(lambda row: %s, reader)" % (instance_filter))
+
+    df_results = ([pd.read_csv(result) for result in results]
+                  if results is not None else [])
+
+    # Get fieldnames
     with open(datacsv_path, "r") as f:
-        reader = csv.reader(f)
-        fieldnames = next(reader)
+        csv_reader_tmp = csv.reader(f)
+        fieldnames = next(csv_reader_tmp)
+
     date = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     if output_name is None:
         output_name = " ".join([str(label) for label in labels])
@@ -313,6 +321,16 @@ def process(
 
             if objective_sense_field in row:
                 objective_sense = row[objective_sense_field]
+
+            for df in df_results:
+                for key in list(df):
+                    if key in ("Problem", "Dataset", "Path", "Format"):
+                        continue;
+                    if len(rows_new) == 1:
+                        fieldnames.append(key)
+                    df_row = df[(df.Dataset == row["Dataset"])
+                                & (df.Path == row["Path"])]
+                    rows_new[-1][key] = df_row.iloc[0][key]
 
             for label in labels:
                 print(label)
@@ -874,6 +892,11 @@ if __name__ == "__main__":
             nargs='+',
             help='')
     parser.add_argument(
+            "-r", "--results",
+            type=str,
+            nargs='*',
+            help='')
+    parser.add_argument(
             "-f", "--filter",
             type=str,
             default="True",
@@ -907,6 +930,7 @@ if __name__ == "__main__":
     process(args.csv,
             args.benchmark,
             args.labels,
+            args.results,
             args.filter,
             args.timelimit,
             args.objectivesense,
