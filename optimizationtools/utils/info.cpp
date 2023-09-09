@@ -7,6 +7,9 @@ using namespace optimizationtools;
 
 volatile sig_atomic_t sigint_flag = 0;
 
+namespace
+{
+
 void sigint_handler(int)
 {
     if (sigint_flag == 1) {
@@ -14,6 +17,8 @@ void sigint_handler(int)
         exit(1);
     }
     sigint_flag = 1; // set flag
+}
+
 }
 
 Info::Info()
