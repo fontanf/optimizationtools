@@ -5,10 +5,10 @@
 
 using namespace optimizationtools;
 
-volatile sig_atomic_t sigint_flag = 0;
-
 namespace
 {
+
+volatile sig_atomic_t sigint_flag = 0;
 
 void sigint_handler(int)
 {

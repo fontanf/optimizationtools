@@ -147,37 +147,57 @@ inline void IndexedMap<Value>::shuffle_in(
     for (Position position = 0;
             position < number_of_elements;
             ++position) {
-        std::uniform_int_distribution<Position> distribution(position, number_of_elements_ - 1);
+        std::uniform_int_distribution<Position> distribution(
+                position,
+                number_of_elements_ - 1);
         Position position_2 = distribution(generator);
         std::swap(elements_[position], elements_[position_2]);
-        positions_[elements_[position]] = position;
-        positions_[elements_[position_2]] = position_2;
+        positions_[elements_[position].first] = position;
+        positions_[elements_[position_2].first] = position_2;
     }
 }
 
 template <typename Value>
 inline void IndexedMap<Value>::shuffle_in(std::mt19937_64& generator)
 {
-    std::shuffle(elements_.begin(), elements_.begin() + number_of_elements_, generator);
+    std::shuffle(
+            elements_.begin(),
+            elements_.begin() + number_of_elements_,
+            generator);
     for (Position position = 0; position < number_of_elements_; ++position)
-        positions_[elements_[position]] = position;
+        positions_[elements_[position].first] = position;
 }
 
 template <typename Value>
 inline void IndexedMap<Value>::shuffle_out(std::mt19937_64& generator)
 {
-    std::shuffle(elements_.begin() + number_of_elements_, elements_.end(), generator);
-    for (Position position = number_of_elements_; position < (Position)elements_.size(); ++position)
+    std::shuffle(
+            elements_.begin() + number_of_elements_,
+            elements_.end(),
+            generator);
+    for (Position position = number_of_elements_;
+            position < (Position)elements_.size();
+            ++position) {
         positions_[elements_[position]] = position;
+    }
 }
 
 template <typename Value>
 inline void IndexedMap<Value>::shuffle(std::mt19937_64& generator)
 {
-    std::shuffle(elements_.begin(), elements_.begin() + number_of_elements_, generator);
-    std::shuffle(elements_.begin() + number_of_elements_, elements_.end(), generator);
-    for (Position position = 0; position < (Position)elements_.size(); ++position)
+    std::shuffle(
+            elements_.begin(),
+            elements_.begin() + number_of_elements_,
+            generator);
+    std::shuffle(
+            elements_.begin() + number_of_elements_,
+            elements_.end(),
+            generator);
+    for (Position position = 0;
+            position < (Position)elements_.size();
+            ++position) {
         positions_[elements_[position]] = position;
+    }
 }
 
 }
