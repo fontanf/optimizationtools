@@ -2,6 +2,8 @@
  * This package provides a structure to pass as argument of optimization
  * algorithms which simplifies several aspects of the implementation.
  *
+ * It includes an "Ouptut" object and a "Logger" object.
+ *
  * It is designed such that the user can use a default value:
  *     algorithm(Instance instance, Info info = Info());
  *
@@ -13,30 +15,30 @@
  *
  * Verbosity features:
  * - Enable verbosity:
- *     info.set_verbosity_leve(1);
+ *     info.output().set_verbosity_leve(1);
  * - Write something on the standard output:
- *     info.os() << "Print " << message;
+ *     info.output() << "Print " << message;
  *
  * Certificate path features:
  * - Set the path of the certificate file:
- *     info.set_certificate_path("certificate_path");
+ *     info.output().set_certificate_path("certificate_path");
  *
  * JSON output features:
  * - The JSON features rely on the  nlohmann/json package.
  * - They can be disabled by setting 'FFOT_USE_JSON' to '0', and thus, avoid
  *   the dependency.
  * - Set the path of the JSON output file:
- *     info.add_to_json_output_path("json_output_path");
+ *     info.output().add_to_json_output_path("json_output_path");
  * - Write something in the JSON output file (thread safe):
- *     info.add_to_json("category", "key", value);
+ *     info.output().add_to_json("category", "key", value);
  *
  * Logging features:
  * - When compiling with NODEBUG, logging is disabled and no line related to
  *   the logging is kept in the final executable.
  * - Set the path of the log file:
- *     info.set_log_path("log_path");
+ *     info.logger().set_log_path("log_path");
  * - Also write the log to the standard error output:
- *     info.set_log2stderr(true);
+ *     info.logger().set_log_to_stderr(true);
  * - Disable/enable logging (enabled by default):
  *     FFOT_LOG_OFF(info);
  *     FFOT_LOG_ON(info);
@@ -67,37 +69,7 @@
  * - Check SIGINT and time limit:
  *     info.needs_to_end()
  *
- * Example of function to update an incumbent solution:
-
-void update_solution(
-        Solution& incumbent_solution,
-        const Solution& new_solution,
-        optimizationtools::Info& info)
-{
-    info.lock();
-
-    if (incumbent_solution is worse than new_solution) {
-        incumbent_solution = new_solution;
-
-        info.output->number_of_solutions++;
-        double t = round(info.elapsed_time() * 10000) / 10000;
-        info.os()
-                << "Time: " << t
-                << "; New solution with value: " << incumbent_solution.value()
-                << std::endl);
-        std::string sol_str = "Solution" + std::to_string(info.output->number_of_solutions);
-        info.add_to_json(sol_str, "Value", incumbent_solution.value());
-        info.add_to_json(sol_str, "Time", t);
-        if (!info.output->only_write_at_the_end) {
-            info.write_json_output();
-            solution.write(info.output->certificate_path);
-        }
-    }
-
-    info.unlock();
-}
-
-*/
+ */
 
 #pragma once
 
@@ -118,33 +90,25 @@ void update_solution(
 #else
 
 #define FFOT_DBG(x) x
-#define FFOT_LOG(info, message) \
-    { \
-        if (info.logger->on && info.logger->level <= info.logger->maximum_log_level) { \
-            if (info.logger->log_file.is_open()) \
-                info.logger->log_file << message; \
-            if (info.logger->log2stderr) \
-                std::cerr << message; \
-        } \
-    }
+#define FFOT_LOG(info, message) { info.logger << message; }
 #define FFOT_LOG_FOLD_START(info, message) \
     { \
-        info.logger->level++; \
+        info.logger().increment_level(); \
         FFOT_LOG(info, "{{{ " << message); \
     }
 #define FFOT_LOG_FOLD_END(info, message) \
     { \
         FFOT_LOG(info, message << " }}}" << std::endl); \
-        info.logger->level--; \
+        info.logger().decrement_level(); \
     }
 #define FFOT_LOG_FOLD(info, message) \
     { \
-        info.logger->level++; \
+        info.logger().increment_level(); \
         FFOT_LOG(info, "{{{ " << message << " }}}" << std::endl); \
-        info.logger->level--; \
+        info.logger().decrement_level(); \
     }
-#define FFOT_LOG_ON(info)  { info.logger->on = true; }
-#define FFOT_LOG_OFF(info) { info.logger->on = false; }
+#define FFOT_LOG_ON(info) { info.logger().enable(); }
+#define FFOT_LOG_OFF(info) { info.logger().disable(); }
 
 #endif
 
@@ -164,217 +128,322 @@ void update_solution(
 namespace optimizationtools
 {
 
-class OutputStream: public std::ostream
+/**
+ * Logger structure.
+ */
+class Logger
 {
-    struct ComposeBuffer: public std::streambuf
-    {
-        void add_buffer(std::streambuf* buf)
-        {
-            bufs.push_back(buf);
-        }
-
-        virtual int overflow(int c)
-        {
-            for (auto buf: bufs)
-                buf->sputc(c);
-            return c;
-        }
-
-        std::vector<std::streambuf*> bufs;
-    };
 
 public:
 
-    OutputStream():
-        std::ostream(NULL)
+    /*
+     * Constructors and destructors
+     */
+
+    Logger() { }
+
+    Logger(
+            const Logger& logger,
+            const std::string& suffix);
+
+    /*
+     * Setters
+     */
+
+    /** Enable logs to standard error output. */
+    Logger& set_log_to_stderr(bool log_to_stderr) { log_to_stderr_ = log_to_stderr; return *this; }
+
+    /** Set a maximum level for the logs. */
+    Logger& set_maximum_log_level(int maximum_log_level) { maximum_log_level_ = maximum_log_level; return *this; }
+
+    /** Set the path of the log file. */
+    Logger& set_log_path(const std::string& log_path);
+
+    /** Enable logs. */
+    void enablel() { on_ = true; }
+
+    /** Disable logs. */
+    void disable() { on_ = false; }
+
+    /** Increment debug log level. */
+    void increment_level() { level_++; }
+
+    /** Decrement debug log level. */
+    void decrement_level() { level_--; }
+
+    /** Write a log message. */
+    template <typename T>
+    Logger& operator<<(T& message)
     {
-        std::ostream::rdbuf(&buffer);
+        if (on_ && level_ <= maximum_log_level_) {
+            if (log_to_stderr_)
+                std::cout << message;
+            if (log_file_.is_open())
+                std::cout << message;
+            for (std::ofstream* os: ofstreams_)
+                *os << message;
+        }
+        return *this;
     }
 
-    void link_stream(std::ostream& out)
+    Logger& operator<<(
+            std::basic_ostream<std::ostream::char_type, std::ostream::traits_type>& (*func)(std::basic_ostream<std::ostream::char_type, std::ostream::traits_type>&))
     {
-        out.flush();
-        buffer.add_buffer(out.rdbuf());
+        if (log_to_stderr_)
+            std::cout << func;
+        if (log_file_.is_open())
+            std::cout << func;
+        for (std::ofstream* os: ofstreams_)
+            *os << func;
+        return *this;
     }
 
 private:
 
-    ComposeBuffer buffer;
+    /** Enable logging. */
+    bool on_ = true;
+
+    /** Enable writing logs to standard error output. */
+    bool log_to_stderr_ = false;
+
+    /** Path to the log file. */
+    std::string log_path_;
+
+    /** Log file. */
+    std::ofstream log_file_;
+
+    /** Pointers to ofstreams. */
+    std::vector<std::ofstream*> ofstreams_;
+
+    /** Current level of the logs. */
+    int level_ = 0;
+
+    /** Maximum level of the logs. */
+    int maximum_log_level_ = 999;
 
 };
 
-struct Info
+/**
+ * Output structure.
+ *
+ * It stores everything related to the certificate file and the the JSON output
+ * file.
+ */
+class Output
 {
 
 public:
 
-    /**
-     * Logger structure.
+    /*
+     * Setters
      */
-    struct Logger
-    {
-        /** Enable logging. */
-        bool on = true;
 
-        /** Enable writing logs to standard error output. */
-        bool log2stderr = false;
+    /** Enable verbosity. */
+    Output& set_verbosity_level(int verbosity_level) { verbosity_level_ = verbosity_level; return *this; }
 
-        /** Log file. */
-        std::ofstream log_file;
+    /** Enable logs to standard output. */
+    Output& set_log_to_stdout(bool log_to_stdout) { log_to_stdout_ = log_to_stdout; return *this; }
 
-        /** Path to the log file. */
-        std::string log_path;
+    /** Set the path of the log file. */
+    Output& set_log_path(const std::string& log_path);
 
-        /** Current level of the logs. */
-        int level = 0;
+    /** Set JSON output path. */
+    Output& set_json_output_path(const std::string& json_output_path) { json_output_path_ = json_output_path; return *this; }
 
-        /** Maximum level of the logs. */
-        int maximum_log_level = 999;
-    };
+    /** Set certificate path. */
+    Output& set_certificate_path(const std::string& certificate_path) { certificate_path_ = certificate_path; return *this; }
 
-    /**
-     * Output structure.
-     *
-     * It stores everything related to the certificate file and the the JSON output
-     * file.
-     */
-    struct Output
-    {
-        /** Output stream. */
-        OutputStream os;
-
-#if FFOT_USE_JSON == 1
-        /** JSON output file. */
-        nlohmann::json json;
-#endif
-
-        /** Verbose level. */
-        int verbosity_level = 0;
-
-        /** Only write outputs at the end of the algorithm. */
-        bool only_write_at_the_end = true;
-
-        /** Path to the JSON output file. */
-        std::string json_output_path  = "";
-
-        /** Path to the certificate file. */
-        std::string certificate_path = "";
-
-        /** Mutex. */
-        std::mutex mutex;
-
-        /** Counter for the number of solutions. */
-        int number_of_solutions = 0;
-
-        /** Counter for the number of bounds. */
-        int number_of_bounds = 0;
-    };
-
+    /** Only write the output files at the end of the algorithm. */
+    Output& set_only_write_at_the_end(bool only_write_at_the_end) { only_write_at_the_end_ = only_write_at_the_end; return *this; }
 
     /*
-     * Constructors and destructors.
+     * Getters
+     */
+
+    /** Get verbosity level. */
+    int verbosity_level() const { return verbosity_level_; }
+
+    /** Get certificate path. */
+    const std::string& certificate_path() const { return certificate_path_; }
+
+    /** Get only write at the end. */
+    bool only_write_at_the_end() const { return only_write_at_the_end_; }
+
+    /** Increment and return the new number of solutions. */
+    int next_number_of_solutions()
+    {
+        number_of_solutions_++;
+        return number_of_solutions_;
+    }
+
+    /** Increment and return the new number of bounds. */
+    int next_number_of_bounds()
+    {
+        number_of_bounds_++;
+        return number_of_bounds_;
+    }
+
+    /** Write a log message. */
+    template <typename T>
+    Output& operator<<(T const& message)
+    {
+        if (log_to_stdout_)
+            std::cout << message;
+        if (log_file_.is_open())
+            std::cout << message;
+        for (std::ofstream* os: ofstreams_)
+            *os << message;
+        return *this;
+    }
+
+    Output& operator<<(
+            std::basic_ostream<std::ostream::char_type, std::ostream::traits_type>& (*func)(std::basic_ostream<std::ostream::char_type, std::ostream::traits_type>&))
+    {
+        if (log_to_stdout_)
+            std::cout << func;
+        if (log_file_.is_open())
+            std::cout << func;
+        for (std::ofstream* os: ofstreams_)
+            *os << func;
+        return *this;
+    }
+
+    /** Lock mutex. */
+    void lock() { mutex_.lock(); }
+
+    /** Unlock mutex. */
+    void unlock() { mutex_.unlock(); }
+
+    /*
+     * JSON output
+     */
+
+    template<typename T1, typename T2, typename T3>
+    void add_to_json(T1 category, T2 key, T3 value)
+    {
+#if FFOT_USE_JSON == 1
+        json_[category][key] = value;
+#endif
+    }
+
+    /** Write the JSON output file. */
+    void write_json_output(const std::string& json_output_path) const;
+
+    /** Write the JSON output file. */
+    void write_json_output() const { write_json_output(json_output_path_); }
+
+private:
+
+    /** Enable writing logs to standard output. */
+    bool log_to_stdout_ = true;
+
+    /** Path to the log file. */
+    std::string log_path_;
+
+    /** Log file. */
+    std::ofstream log_file_;
+
+    /** Pointers to ofstreams. */
+    std::vector<std::ofstream*> ofstreams_;
+
+#if FFOT_USE_JSON == 1
+    /** JSON output file. */
+    nlohmann::json json_;
+#endif
+
+    /** Verbose level. */
+    int verbosity_level_ = 0;
+
+    /** Only write outputs at the end of the algorithm. */
+    bool only_write_at_the_end_ = true;
+
+    /** Path to the JSON output file. */
+    std::string json_output_path_  = "";
+
+    /** Path to the certificate file. */
+    std::string certificate_path_ = "";
+
+    /** Mutex. */
+    std::mutex mutex_;
+
+    /** Counter for the number of solutions. */
+    int number_of_solutions_ = 0;
+
+    /** Counter for the number of bounds. */
+    int number_of_bounds_ = 0;
+
+};
+
+class Info
+{
+
+public:
+
+    /*
+     * Constructors and destructors
      */
 
     /** Constructor. */
     Info();
 
     /**
-     * Copy an existing Info structure.
+     * Copy an existing Info object.
      *
-     * This is meant to be used in parallel algorithms.
+     * This is meant to be used
+     * - in parallel algorithms: in this case, the Output object should be kept
+     *   and a new Logger object should be used.
+     * - When calling another sub-algorithm inside the algorithm: in this case,
+     *   the Logger object should be kept and a new Output object should be
+     *   used.
      *
-     * Keep the Output structure iff 'keep_output == true'.
+     * Keep the Output object iff 'keep_output == true'.
      *
-     * Keep the Logging structure iff 'keep_logger == ""'.  Otherwise, create a
-     * new Logger structure with 'logger_string' append to the log path (before
-     * the extension).
+     * Keep the Logger object iff 'logger_suffix == ""'.  Otherwise, create a
+     * new Logger structure with 'logger_suffix' appended to the log path
+     * (before the extension).
      *
-     * Note that Info(info, false, "newthread") keeps the time limit.
+     * Note that the time limit and the sigint handler are always kept.
      */
     Info(
             const Info& info,
             bool keep_output,
-            std::string keep_logger);
+            std::string logger_suffix);
 
     /*
-     * Getters.
+     * Setters
      */
-
-    /** Get output stream. */
-    OutputStream& os() { return output->os; }
-
-    /** Get verbosity level. */
-    int verbosity_level() const { return output->verbosity_level; }
-
-    /*
-     * Setters.
-     */
-
-    /** Enable verbosity. */
-    Info& set_verbosity_level(int verbosity_level)
-    {
-        if (verbosity_level > 0) {
-            output->os.clear();
-        } else {
-            output->os.setstate(std::ios_base::failbit);
-        }
-        output->verbosity_level = verbosity_level;
-        return *this;
-    }
-
-    /** Set JSON output path. */
-    Info& set_json_output_path(std::string outputfile) { output->json_output_path = outputfile; return *this; }
-
-    /** Set certificate path. */
-    Info& set_certificate_path(std::string certfile) { output->certificate_path = certfile; return *this; }
-
-    /** Only write the output files at the end of the algorithm. */
-    Info& set_only_write_at_the_end(bool b) { output->only_write_at_the_end = b; return *this; }
-
-    /** Enable logs to standard error output. */
-    Info& set_log2stderr(bool log2stderr) { logger->log2stderr = log2stderr; return *this; }
-
-    /** Set a maximum level for the logs. */
-    Info& set_maximum_log_level(int maximum_log_level) { logger->maximum_log_level = maximum_log_level; return *this; }
 
     /** Set the time limit of the algorithm. */
-    Info& set_time_limit(double t) { time_limit = t; return *this; }
-
-    /** Set the path of the log file. */
-    Info& set_log_path(std::string log_path);
+    Info& set_time_limit(double time_limit) { time_limit_ = time_limit; return *this; }
 
     /** Set SIGINT handler. */
     Info& set_sigint_handler();
 
-    template<typename T1, typename T2, typename T3>
-    void add_to_json(T1 category, T2 key, T3 value)
-    {
-#if FFOT_USE_JSON == 1
-        output->json[category][key] = value;
-#endif
-    }
+    /*
+     * Getters
+     */
 
-    /** Lock mutex. */
-    void lock() { output->mutex.lock(); }
+    /** Get the logger object. */
+    Logger& logger() { return *logger_; }
 
-    /** Unlock mutex. */
-    void unlock() { output->mutex.unlock(); }
+    /** Get the output object. */
+    Output& output() { return *output_; }
 
     /*
-     * Time.
+     * Stop criteria
      */
 
     /** Get the elapsed time since the start of the algorithm. */
     double elapsed_time() const;
 
     /** Get the remaining time before reaching the time limit. */
-    double remaining_time() const { return std::max(0.0, time_limit - elapsed_time()); }
+    double remaining_time() const { return std::max(0.0, time_limit_ - elapsed_time()); }
 
     /** Return 'true' iff the time limit has not been reached yet. */
-    bool check_time() const { return elapsed_time() <= time_limit; }
+    bool check_time() const { return elapsed_time() <= time_limit_; }
 
     /** Reset the starting time of the algorithm. */
-    void reset_time() { start = std::chrono::high_resolution_clock::now(); }
+    void reset_time() { start_ = std::chrono::high_resolution_clock::now(); }
 
     /** Return 'true' iff the program has received the SIGINT signal. */
     bool terminated_by_sigint() const;
@@ -384,38 +453,29 @@ public:
     {
         return !check_time()
             || terminated_by_sigint()
-            || (end != nullptr && *end);
+            || (end_ != nullptr && *end_);
     }
 
-    /*
-     * JSON output.
-     */
-
-    /** Write the JSON output file. */
-    void write_json_output(std::string json_output_path) const;
-
-    /** Write the JSON output file. */
-    void write_json_output() const { write_json_output(output->json_output_path); }
-
+private:
 
     /*
-     * Attributes
+     * Private attributes
      */
 
     /** Pointer to the logger. */
-    std::shared_ptr<Logger> logger = NULL;
+    std::shared_ptr<Logger> logger_ = NULL;
 
     /** Pointer to the output structure. */
-    std::shared_ptr<Output> output = NULL;
+    std::shared_ptr<Output> output_ = NULL;
 
     /** Start time of the algorithm. */
-    std::chrono::high_resolution_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point start_;
 
     /** Time limit of the algorithm. */
-    double time_limit = std::numeric_limits<double>::infinity();
+    double time_limit_ = std::numeric_limits<double>::infinity();
 
     /** Flag that the user can set to 'true' to tell the algorithm to stop. */
-    bool* end = nullptr;
+    bool* end_ = nullptr;
 
 };
 

@@ -21,54 +21,85 @@ void sigint_handler(int)
 
 }
 
-Info::Info()
+Logger::Logger(
+        const Logger& logger,
+        const std::string& suffix)
 {
-    logger = std::shared_ptr<Logger>(new Logger());
-    output = std::shared_ptr<Output>(new Output());
-    output->os.link_stream(std::cout);
-    set_verbosity_level(0);
-    start = std::chrono::high_resolution_clock::now();
-}
-
-Info::Info(const Info& info, bool keep_output, std::string keep_logger)
-{
-    if (keep_logger == "") {
-        logger = std::shared_ptr<Logger>(info.logger);
-    } else {
-        // Insert 'keep_logger' string before the extension.
-        std::string log_file = info.logger->log_path;
-        if (log_file != "") {
-            for (int i = log_file.length() - 1; i >= 0; --i) {
-                if (log_file[i] == '.') {
-                    log_file.insert(i, "_" + keep_logger);
-                    break;
-                }
+    std::string log_path = logger.log_path_;
+    if (log_path != "") {
+        for (int i = log_path.length() - 1; i >= 0; --i) {
+            if (log_path[i] == '.') {
+                log_path.insert(i, "_" + suffix);
+                break;
             }
         }
-        logger = std::shared_ptr<Logger>(new Logger());
-        set_log_path(log_file);
     }
-    if (keep_output) {
-        output = std::shared_ptr<Output>(info.output);
-    } else {
-        output = std::shared_ptr<Output>(new Output());
-        output->os.link_stream(std::cout);
-        set_verbosity_level(0);
-    }
-    start = info.start;
-    time_limit = info.time_limit;
-    end = info.end;
+    set_log_path(log_path);
 }
 
-Info& Info::set_log_path(std::string log_path)
+Logger& Logger::set_log_path(const std::string& log_path)
 {
-    logger->log_path = log_path;
-    if (log_path == "")
+    log_path_ = log_path;
+    if (log_file_.is_open())
+        log_file_.close();
+    if (log_path_ == "")
         return *this;
-    if (logger->log_file.is_open())
-        logger->log_file.close();
-    logger->log_file.open(log_path);
+    log_file_.open(log_path);
     return *this;
+}
+
+Output& Output::set_log_path(const std::string& log_path)
+{
+    log_path_ = log_path;
+    if (log_file_.is_open())
+        log_file_.close();
+    if (log_path_ == "")
+        return *this;
+    log_file_.open(log_path);
+    return *this;
+}
+
+void Output::write_json_output(const std::string& json_output_path) const
+{
+#if FFOT_USE_JSON == 1
+    if (json_output_path == "")
+        return;
+    std::ofstream file(json_output_path);
+    if (!file.good()) {
+        throw std::runtime_error(
+                "Unable to open file \"" + json_output_path + "\".");
+    }
+    file << std::setw(4) << json_ << std::endl;
+#endif
+}
+
+Info::Info():
+    logger_(std::shared_ptr<Logger>(new Logger())),
+    output_(std::shared_ptr<Output>(new Output())),
+    start_(std::chrono::high_resolution_clock::now())
+{
+}
+
+Info::Info(
+        const Info& info,
+        bool keep_output,
+        std::string logger_suffix)
+{
+    if (logger_suffix == "") {
+        logger_ = std::shared_ptr<Logger>(info.logger_);
+    } else {
+        logger_ = std::shared_ptr<Logger>(new Logger(*info.logger_, logger_suffix));
+    }
+
+    if (keep_output) {
+        output_ = std::shared_ptr<Output>(info.output_);
+    } else {
+        output_ = std::shared_ptr<Output>(new Output());
+    }
+
+    start_ = info.start_;
+    time_limit_ = info.time_limit_;
+    end_ = info.end_;
 }
 
 Info& Info::set_sigint_handler()
@@ -82,7 +113,7 @@ double Info::elapsed_time() const
     std::chrono::high_resolution_clock::time_point end
         = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_span
-        = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end - start_);
     return time_span.count();
 }
 
@@ -90,18 +121,3 @@ bool Info::terminated_by_sigint() const
 {
     return sigint_flag;
 }
-
-void Info::write_json_output(std::string json_output_path) const
-{
-#if FFOT_USE_JSON == 1
-    if (json_output_path == "")
-        return;
-    std::ofstream file(json_output_path);
-    if (!file.good()) {
-        throw std::runtime_error(
-                "Unable to open file \"" + json_output_path + "\".");
-    }
-    file << std::setw(4) << output->json << std::endl;
-#endif
-}
-
