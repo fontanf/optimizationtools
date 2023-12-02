@@ -9,74 +9,10 @@ namespace optimizationtools
 {
 
 template <typename T>
-std::vector<T> bob_floyd(T sample_size, T upper_bound, std::mt19937_64& generator);
-
-/**
- * Split a string by whitespace.
- */
-inline std::vector<std::string> split(std::string line);
-
-/**
- * Split a string according to a given separator.
- *
- * Whitespaces are trimmed.
- */
-inline std::vector<std::string> split(std::string line, char c);
-
-inline void hash_combine(std::size_t& seed, const size_t v);
-
-template <typename T>
-inline bool on_segment(T x1, T y1, T x2, T y2, T x3, T y3);
-
-template <typename T>
-int orientation(T x1, T y1, T x2, T y2, T x3, T y3);
-
-template <typename T>
-bool intersect(T x11, T y11, T x12, T y12, T x21, T y21, T x22, T y22);
-
-template <typename T>
-struct Ratio
-{
-    Ratio(T v1, T v2): v1(v1), v2(v2) { }
-
-    T v1;
-    T v2;
-};
-
-/** Output "'v1' / 'v2' ('v1/v2*100'%)". */
-template <typename T>
-std::ostream& operator<<(
-        std::ostream& os,
-        const Ratio<T>& ratio);
-
-enum class ObjectiveDirection { Minimize, Maximize };
-
-template <typename T>
-std::string solution_value(
-        ObjectiveDirection objective_direction,
-        bool solution_feasible,
-        T solution_value);
-
-template <typename T>
-double absolute_optimality_gap(
-        ObjectiveDirection objective_direction,
-        bool solution_feasible,
-        T solution_value,
-        T bound);
-
-template <typename T>
-double relative_optimality_gap(
-        ObjectiveDirection objective_direction,
-        bool solution_feasible,
-        T solution_value,
-        T bound);
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename T>
-std::vector<T> bob_floyd(T sample_size, T upper_bound, std::mt19937_64& generator)
+inline std::vector<T> bob_floyd(
+        T sample_size,
+        T upper_bound,
+        std::mt19937_64& generator)
 {
     std::vector<T> samples;
     for (T d = upper_bound - sample_size; d < upper_bound; d++) {
@@ -89,6 +25,10 @@ std::vector<T> bob_floyd(T sample_size, T upper_bound, std::mt19937_64& generato
     }
     return samples;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 static inline void ltrim(std::string &s)
 {
@@ -104,7 +44,10 @@ static inline void rtrim(std::string &s)
     }).base(), s.end());
 }
 
-std::vector<std::string> split(std::string line)
+/**
+ * Split a string by whitespace.
+ */
+inline std::vector<std::string> split(std::string line)
 {
     std::istringstream buffer(line);
     return {
@@ -112,7 +55,14 @@ std::vector<std::string> split(std::string line)
         std::istream_iterator<std::string>()};
 }
 
-std::vector<std::string> split(std::string line, char c)
+/**
+ * Split a string according to a given separator.
+ *
+ * Whitespaces are trimmed.
+ */
+inline std::vector<std::string> split(
+        std::string line,
+        char c)
 {
     std::vector<std::string> v;
     std::string line_without_extra_whitespaces;
@@ -131,7 +81,9 @@ std::vector<std::string> split(std::string line, char c)
     return v;
 }
 
-void hash_combine(std::size_t& seed, const size_t v)
+inline void hash_combine(
+        std::size_t& seed,
+        const size_t v)
 {
     seed ^= v + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
@@ -141,7 +93,13 @@ void hash_combine(std::size_t& seed, const size_t v)
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-bool on_segment(T x1, T y1, T x2, T y2, T x3, T y3)
+inline bool on_segment(
+        T x1,
+        T y1,
+        T x2,
+        T y2,
+        T x3,
+        T y3)
 {
     if (x1 <= std::max(x1, x3)
             && x2 >= std::min(x1, x3)
@@ -152,7 +110,13 @@ bool on_segment(T x1, T y1, T x2, T y2, T x3, T y3)
 }
 
 template <typename T>
-int orientation(T x1, T y1, T x2, T y2, T x3, T y3)
+inline int orientation(
+        T x1,
+        T y1,
+        T x2,
+        T y2,
+        T x3,
+        T y3)
 {
     auto val = (y2 - y1) * (x3 - x2) - (x2 - x1) * (y3 - y2);
     if (val == 0)
@@ -161,7 +125,15 @@ int orientation(T x1, T y1, T x2, T y2, T x3, T y3)
 }
 
 template <typename T>
-bool intersect(T x11, T y11, T x12, T y12, T x21, T y21, T x22, T y22)
+inline bool intersect(
+        T x11,
+        T y11,
+        T x12,
+        T y12,
+        T x21,
+        T y21,
+        T x22,
+        T y22)
 {
     int o1 = orientation(x11, y11, x12, y12, x21, y21);
     int o2 = orientation(x11, y11, x12, y12, x22, y22);
@@ -188,8 +160,22 @@ bool intersect(T x11, T y11, T x12, T y12, T x21, T y21, T x22, T y22)
     return false;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 template <typename T>
-std::ostream& operator<<(
+struct Ratio
+{
+    Ratio(T v1, T v2): v1(v1), v2(v2) { }
+
+    T v1;
+    T v2;
+};
+
+/** Output "'v1' / 'v2' ('v1/v2*100'%)". */
+template <typename T>
+inline std::ostream& operator<<(
         std::ostream& os,
         const Ratio<T>& ratio)
 {
@@ -197,8 +183,10 @@ std::ostream& operator<<(
     return os;
 }
 
+enum class ObjectiveDirection { Minimize, Maximize };
+
 template <typename T>
-std::string solution_value(
+inline std::string solution_value(
         ObjectiveDirection objective_direction,
         bool solution_feasible,
         T solution_value)
@@ -211,7 +199,7 @@ std::string solution_value(
 }
 
 template <typename T>
-double absolute_optimality_gap(
+inline double absolute_optimality_gap(
         ObjectiveDirection objective_direction,
         bool solution_feasible,
         T solution_value,
@@ -225,7 +213,7 @@ double absolute_optimality_gap(
 }
 
 template <typename T>
-double relative_optimality_gap(
+inline double relative_optimality_gap(
         ObjectiveDirection objective_direction,
         bool solution_feasible,
         T solution_value,
@@ -240,5 +228,39 @@ double relative_optimality_gap(
         (double)(bound - solution_value) / bound;
 }
 
+template <typename T>
+inline bool is_solution_strictly_better(
+        ObjectiveDirection objective_direction,
+        bool solution_cur_feasible,
+        T solution_cur_value,
+        bool solution_new_feasible,
+        T solution_new_value)
+{
+    if (!solution_new_feasible)
+        return false;
+    if (!solution_cur_feasible)
+        return true;
+    switch (objective_direction) {
+    case ObjectiveDirection::Minimize:
+        return solution_new_value < solution_cur_value;
+    case ObjectiveDirection::Maximize:
+        return solution_new_value > solution_cur_value;
+    }
+    return false;
 }
 
+inline bool is_bound_strictly_better(
+        ObjectiveDirection objective_direction,
+        double bound_cur,
+        double bound_new)
+{
+    switch (objective_direction) {
+    case ObjectiveDirection::Minimize:
+        return bound_new > bound_cur;
+    case ObjectiveDirection::Maximize:
+        return bound_new < bound_cur;
+    }
+    return false;
+}
+
+}
