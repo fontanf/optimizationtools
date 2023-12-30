@@ -6,6 +6,7 @@ cc_library(
                 "doubly_indexed_map.hpp",
                 "indexed_binary_heap.hpp",
                 "sorted_on_demand_array.hpp",
+                "partial_set.hpp",
         ],
         srcs = [ ],
         visibility = ["//visibility:public"],
