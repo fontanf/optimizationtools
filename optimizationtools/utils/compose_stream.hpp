@@ -84,7 +84,7 @@ public:
     ComposeStream(
             bool to_stdout,
             bool to_stderr,
-            std::string file_path,
+            const std::string& file_path,
             const std::vector<std::ostream*>& ostreams):
         std::ostream(NULL)
     {

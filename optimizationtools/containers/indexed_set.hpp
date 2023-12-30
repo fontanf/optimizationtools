@@ -236,4 +236,3 @@ inline void IndexedSet::shuffle(std::mt19937_64& generator)
 }
 
 }
-

@@ -30,14 +30,14 @@ inline std::vector<T> bob_floyd(
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-static inline void ltrim(std::string &s)
+static inline void ltrim(std::string& s)
 {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
         return !std::isspace(ch);
     }));
 }
 
-static inline void rtrim(std::string &s)
+static inline void rtrim(std::string& s)
 {
     s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
         return !std::isspace(ch);
@@ -47,7 +47,7 @@ static inline void rtrim(std::string &s)
 /**
  * Split a string by whitespace.
  */
-inline std::vector<std::string> split(std::string line)
+inline std::vector<std::string> split(const std::string& line)
 {
     std::istringstream buffer(line);
     return {
@@ -61,7 +61,7 @@ inline std::vector<std::string> split(std::string line)
  * Whitespaces are trimmed.
  */
 inline std::vector<std::string> split(
-        std::string line,
+        const std::string& line,
         char c)
 {
     std::vector<std::string> v;
@@ -101,10 +101,10 @@ inline bool on_segment(
         T x3,
         T y3)
 {
-    if (x1 <= std::max(x1, x3)
-            && x2 >= std::min(x1, x3)
-            && y2 <= std::max(y1, y3)
-            && y2 >= std::min(y1, y3))
+    if (x1 <= (std::max)(x1, x3)
+            && x2 >= (std::min)(x1, x3)
+            && y2 <= (std::max)(y1, y3)
+            && y2 >= (std::min)(y1, y3))
         return true;
     return false;
 }
@@ -240,6 +240,57 @@ inline bool is_solution_strictly_better(
         return false;
     if (!solution_cur_feasible)
         return true;
+    switch (objective_direction) {
+    case ObjectiveDirection::Minimize:
+        return solution_new_value < solution_cur_value;
+    case ObjectiveDirection::Maximize:
+        return solution_new_value > solution_cur_value;
+    }
+    return false;
+}
+
+template <typename T>
+inline bool is_solution_strictly_better(
+        ObjectiveDirection objective_direction,
+        T solution_cur_value,
+        bool solution_new_feasible,
+        T solution_new_value)
+{
+    if (!solution_new_feasible)
+        return false;
+    switch (objective_direction) {
+    case ObjectiveDirection::Minimize:
+        return solution_new_value < solution_cur_value;
+    case ObjectiveDirection::Maximize:
+        return solution_new_value > solution_cur_value;
+    }
+    return false;
+}
+
+template <typename T>
+inline bool is_solution_better_or_equal(
+        ObjectiveDirection objective_direction,
+        T solution_cur_value,
+        bool solution_new_feasible,
+        T solution_new_value)
+{
+    if (!solution_new_feasible)
+        return false;
+    switch (objective_direction) {
+    case ObjectiveDirection::Minimize:
+        return solution_new_value <= solution_cur_value;
+    case ObjectiveDirection::Maximize:
+        return solution_new_value >= solution_cur_value;
+    }
+    return false;
+}
+
+template <typename T>
+inline bool is_value_strictly_better(
+        ObjectiveDirection objective_direction,
+        T solution_cur_value,
+        T solution_new_value)
+{
     switch (objective_direction) {
     case ObjectiveDirection::Minimize:
         return solution_new_value < solution_cur_value;

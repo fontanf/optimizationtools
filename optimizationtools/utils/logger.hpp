@@ -25,7 +25,6 @@
 #define FFOT_LOG_FOLD_START(logger, message) \
     { \
         if (logger->enabled()) { \
-            logger->increment_level(); \
             logger->os() << message; \
         } \
     }
@@ -33,15 +32,12 @@
     { \
         if (logger->enabled()) { \
             logger->os() << message << " }}}" << std::endl; \
-            logger->decrement_level(); \
         } \
     }
 #define FFOT_LOG_FOLD(logger, message) \
     { \
         if (logger->enabled()) { \
-            logger->increment_level(); \
             logger->os() << "{{{ " << message << " }}}" << std::endl; \
-            logger->decrement_level(); \
         } \
     }
 #define FFOT_LOG_ON(logger) { logger.enable(); }
@@ -69,7 +65,7 @@ public:
     Logger(
             bool to_stdout,
             bool to_stderr,
-            std::string file_path,
+            const std::string& file_path,
             const std::vector<std::ostream*>& ostreams):
         to_stdout_(to_stdout),
         to_stderr_(to_stderr),
