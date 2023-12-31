@@ -68,7 +68,7 @@ struct Parameters
      */
     std::shared_ptr<Logger> get_logger() const;
 
-    virtual int format_width() const { return 17; }
+    virtual int format_width() const { return 22; }
 
     /** Write a formatted output of the object to a stream. */
     virtual void format(
