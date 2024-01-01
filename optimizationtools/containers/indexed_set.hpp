@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <cstdint>
-#include <cassert>
 #include <random>
 #include <algorithm>
 
