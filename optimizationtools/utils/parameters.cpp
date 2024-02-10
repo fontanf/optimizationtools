@@ -31,15 +31,20 @@ nlohmann::json Parameters::to_json() const
     return nlohmann::json {
         {"TimeLimit", timer.time_limit()},
         {"VerbosityLevel", verbosity_level},
-        {"Messages",
-            {"VerbosityLevel", verbosity_level},
-            {"StandardOutput", messages_to_stdout},
-            {"FilePath", messages_path},
-            {"NumberOfStreams", messages_streams.size()}},
-        {"Logger",
-            {"HasLogger", (logger != nullptr)},
-            {"StardardError", log_to_stderr},
-            {"FilePath", log_path}}};
+        {"Messages", {
+                         {"VerbosityLevel", verbosity_level},
+                         {"StandardOutput", messages_to_stdout},
+                         {"FilePath", messages_path},
+                         {"NumberOfStreams", messages_streams.size()}
+                     },
+        },
+        {"Logger", {
+                       {"HasLogger", (logger != nullptr)},
+                       {"StardardError", log_to_stderr},
+                       {"FilePath", log_path}
+                   },
+        },
+    };
 }
 
 void Parameters::format(
