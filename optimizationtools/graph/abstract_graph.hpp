@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <memory>
 
 namespace optimizationtools
 {
@@ -61,7 +62,7 @@ public:
     }
 
     /** Get the maximum degree of the graph. */
-    virtual VertexPos maximum_degree() const = 0;
+    virtual VertexPos highest_degree() const = 0;
 
     /** Get the weight of a vertex. */
     virtual Weight weight(VertexId vertex_id) const = 0;
@@ -83,6 +84,30 @@ public:
      */
     virtual const_iterator neighbors_end(VertexId vertex_id) const = 0;
 
+    Weight compute_total_weight()
+    {
+        Weight total_weight = 0;
+        for (VertexId vertex_id = 0;
+                vertex_id < number_of_vertices();
+                ++vertex_id) {
+            total_weight += weight(vertex_id);
+        }
+        return total_weight;
+    }
+
+    VertexId compute_highest_degree()
+    {
+        VertexId highest_degree = 0;
+        for (VertexId vertex_id = 0;
+                vertex_id < number_of_vertices();
+                ++vertex_id) {
+            highest_degree = std::max(
+                    highest_degree,
+                    degree(vertex_id));
+        }
+        return highest_degree;
+    }
+
     /*
      * Checkers
      */
@@ -100,4 +125,3 @@ public:
 };
 
 }
-

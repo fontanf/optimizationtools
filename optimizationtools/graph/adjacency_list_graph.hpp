@@ -1,7 +1,6 @@
 #pragma once
 
 #include "optimizationtools/graph/abstract_graph.hpp"
-#include "optimizationtools/utils/utils.hpp"
 
 namespace optimizationtools
 {
@@ -61,39 +60,6 @@ public:
      * Constructors destructor
      */
 
-    /** Create a graph from a file. */
-    AdjacencyListGraph(
-            std::string instance_path,
-            std::string format);
-
-    /** Constructor. */
-    AdjacencyListGraph(VertexId number_of_vertices = 0);
-
-    /** Add a vertex. */
-    virtual VertexId add_vertex(Weight weight = 1);
-
-    /** Set the weight of a vertex. */
-    void set_weight(
-            VertexId vertex_id,
-            Weight weight);
-
-    /** Set the weight of all vertices to 1. */
-    void set_unweighted();
-
-    /** Add an edge. */
-    EdgeId add_edge(
-            VertexId vertex_id_1,
-            VertexId vertex_id_2);
-
-    /** Clear graph, i.e. remove vertices and edges. */
-    void clear();
-
-    /** Clear the edges of the graph. */
-    void clear_edges();
-
-    /** Remove duplicate edges (changes the edge ids). */
-    void remove_duplicate_edges();
-
     /** Create a graph from an AbstractGraph. */
     inline AdjacencyListGraph(
             const AbstractGraph& abstract_graph);
@@ -116,7 +82,7 @@ public:
 
     inline VertexId degree(VertexId vertex_id) const override { return vertices_[vertex_id].edges.size(); }
 
-    inline virtual VertexPos maximum_degree() const override { return maximum_degree_; }
+    inline virtual VertexPos highest_degree() const override { return highest_degree_; }
 
     inline Weight weight(VertexId vertex_id) const override { return vertices_[vertex_id].weight; }
 
@@ -156,7 +122,9 @@ public:
      */
 
     /** Write the graph to a file. */
-    void write(std::string instance_path, std::string format);
+    void write(
+            const std::string& instance_path,
+            const std::string& format) const;
 
 private:
 
@@ -174,10 +142,86 @@ private:
     EdgeId number_of_edges_ = 0;
 
     /** Maximum degree. */
-    VertexPos maximum_degree_ = 0;
+    VertexPos highest_degree_ = 0;
 
     /** Total weight. */
     Weight total_weight_ = 0;
+
+    /*
+     * Private methods
+     */
+
+    /** Constructor for the AdjacencyListGraphBuilder. */
+    inline AdjacencyListGraph() { };
+
+    /** Write graph in 'snap' format. */
+    void write_snap(std::ofstream& file) const;
+
+    /** Write graph in 'matrixmarket' format. */
+    void write_matrixmarket(std::ofstream& file) const;
+
+    /** Write graph in 'dimacs' foramt. */
+    void write_dimacs(std::ofstream& file) const;
+
+    friend class AdjacencyListGraphBuilder;
+};
+
+class AdjacencyListGraphBuilder
+{
+
+public:
+
+    /** Constructor. */
+    AdjacencyListGraphBuilder() { };
+
+    /** Read a graph from a file. */
+    void read(
+            const std::string& instance_path,
+            const std::string& format);
+
+    /** Add a vertex. */
+    virtual VertexId add_vertex(Weight weight = 1);
+
+    /** Set the weight of a vertex. */
+    void set_weight(
+            VertexId vertex_id,
+            Weight weight);
+
+    /** Set the weight of all vertices to 1. */
+    void set_unweighted();
+
+    /** Add an edge. */
+    EdgeId add_edge(
+            VertexId vertex_id_1,
+            VertexId vertex_id_2);
+
+    /** Clear graph, i.e. remove vertices and edges. */
+    void clear();
+
+    /** Clear the edges of the graph. */
+    void clear_edges();
+
+    /** Remove duplicate edges (changes the edge ids). */
+    void remove_duplicate_edges();
+
+    /** Create the complementary of a graph. */
+    AdjacencyListGraph complementary() const;
+
+    /*
+     * Build
+     */
+
+    /** Build. */
+    AdjacencyListGraph build();
+
+private:
+
+    /*
+     * Private attributes
+     */
+
+    /** Graph. */
+    AdjacencyListGraph graph_;
 
     /*
      * Private methods
@@ -198,16 +242,6 @@ private:
     /** Read a graph in 'snap' format. */
     void read_snap(std::ifstream& file);
 
-    /** Write graph in 'snap' format. */
-    void write_snap(std::ofstream& file);
-
-    /** Write graph in 'matrixmarket' format. */
-    void write_matrixmarket(std::ofstream& file);
-
-    /** Write graph in 'dimacs' foramt. */
-    void write_dimacs(std::ofstream& file);
-
 };
 
 }
-

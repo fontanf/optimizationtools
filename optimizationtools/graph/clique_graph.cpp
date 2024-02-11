@@ -2,17 +2,15 @@
 
 #include "optimizationtools/utils/utils.hpp"
 
-#include <cstdint>
 #include <vector>
 #include <fstream>
 #include <iostream>
 
 using namespace optimizationtools;
 
-CliqueGraph::CliqueGraph(
-        std::string instance_path,
-        std::string format):
-    neighbors_tmp_(0)
+void CliqueGraphBuilder::read(
+        const std::string& instance_path,
+        const std::string& format)
 {
     std::ifstream file(instance_path);
     if (!file.good())
@@ -27,7 +25,7 @@ CliqueGraph::CliqueGraph(
     }
 }
 
-void CliqueGraph::read_cliquegraph(std::ifstream& file)
+void CliqueGraphBuilder::read_cliquegraph(std::ifstream& file)
 {
     std::string tmp;
     std::vector<std::string> line;
@@ -44,60 +42,57 @@ void CliqueGraph::read_cliquegraph(std::ifstream& file)
         getline(file, tmp);
         line = optimizationtools::split(tmp, ' ');
         std::vector<VertexId> clique;
-        for (std::string element: line)
+        for (const std::string& element: line)
             clique.push_back(stol(element));
         add_clique(clique);
     }
 }
 
-VertexId CliqueGraph::add_vertex(Weight weight)
+VertexId CliqueGraphBuilder::add_vertex(Weight weight)
 {
-    VertexId vertex_id = vertices_.size();
+    VertexId vertex_id = graph_.vertices_.size();
 
-    Vertex vertex;
+    CliqueGraph::Vertex vertex;
     vertex.weight = weight;
-    vertices_.push_back(vertex);
-
-    total_weight_ += weight;
-    neighbors_tmp_.add_element();
-
+    graph_.vertices_.push_back(vertex);
     return vertex_id;
 }
 
-CliqueId CliqueGraph::add_clique()
+CliqueId CliqueGraphBuilder::add_clique()
 {
-    CliqueId id = cliques_.size();
-    cliques_.push_back({});
+    CliqueId id = graph_.cliques_.size();
+    graph_.cliques_.push_back({});
     return id;
 }
 
-CliqueId CliqueGraph::add_clique(
+CliqueId CliqueGraphBuilder::add_clique(
         const std::vector<VertexId>& clique)
 {
-    CliqueId id = cliques_.size();
-    cliques_.push_back(clique);
+    CliqueId id = graph_.cliques_.size();
+    graph_.cliques_.push_back(clique);
     for (VertexId vertex_id: clique) {
-        vertices_[vertex_id].cliques.push_back(id);
-        vertices_[vertex_id].degree += clique.size() - 1;
-        if (maximum_degree_ < degree(vertex_id))
-            maximum_degree_ = degree(vertex_id);
+        graph_.vertices_[vertex_id].cliques.push_back(id);
+        graph_.vertices_[vertex_id].degree += clique.size() - 1;
     }
-    number_of_edges_ += clique.size() * (clique.size() - 1) / 2;
+    graph_.number_of_edges_ += clique.size() * (clique.size() - 1) / 2;
     return id;
 }
 
-void CliqueGraph::add_vertex_to_clique(
+void CliqueGraphBuilder::add_vertex_to_clique(
         CliqueId clique_id,
         VertexId vertex_id)
 {
-    number_of_edges_ += cliques_[clique_id].size();
-    for (VertexId vertex_id_2: cliques_[clique_id])
-        vertices_[vertex_id_2].degree++;
-    vertices_[vertex_id].degree += cliques_[clique_id].size();
-    vertices_[vertex_id].cliques.push_back(clique_id);
-    cliques_[clique_id].push_back(vertex_id);
-
-    for (VertexId vertex_id_2: cliques_[clique_id])
-        if (maximum_degree_ < degree(vertex_id_2))
-            maximum_degree_ = degree(vertex_id_2);
+    graph_.number_of_edges_ += graph_.cliques_[clique_id].size();
+    for (VertexId vertex_id_2: graph_.cliques_[clique_id])
+        graph_.vertices_[vertex_id_2].degree++;
+    graph_.vertices_[vertex_id].degree += graph_.cliques_[clique_id].size();
+    graph_.vertices_[vertex_id].cliques.push_back(clique_id);
+    graph_.cliques_[clique_id].push_back(vertex_id);
 }
+
+void CliqueGraphBuilder::set_weight(
+        VertexId vertex_id,
+        Weight weight)
+{
+    graph_.vertices_[vertex_id].weight = weight;
+};

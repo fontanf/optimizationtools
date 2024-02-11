@@ -40,30 +40,8 @@ public:
      * Constructors and destructor
      */
 
-    /** Create a graph from a file. */
-    CliqueGraph(std::string instance_path, std::string format);
-
-    /** Create an empty graph. */
-    inline CliqueGraph():
-        AbstractGraph(),
-        neighbors_tmp_(0) { }
-
     /** Destructor. */
     inline virtual ~CliqueGraph() { }
-
-    /** Add a vertex. */
-    virtual VertexId add_vertex(Weight weight = 1);
-
-    /** Add a new clique. */
-    CliqueId add_clique();
-
-    /** Add a new clique. */
-    CliqueId add_clique(const std::vector<VertexId>& clique);
-
-    /** Add a vertex to a clique. */
-    void add_vertex_to_clique(
-            CliqueId clique_id,
-            VertexId vertex_id);
 
     virtual CliqueGraph* clone() const override
     {
@@ -80,7 +58,7 @@ public:
 
     inline VertexId degree(VertexId vertex_id) const override { return vertices_[vertex_id].degree; }
 
-    virtual VertexPos maximum_degree() const override { return maximum_degree_; }
+    virtual VertexPos highest_degree() const override { return highest_degree_; }
 
     inline Weight weight(VertexId vertex_id) const override { return vertices_[vertex_id].weight; }
 
@@ -120,7 +98,7 @@ private:
     EdgeId number_of_edges_ = 0;
 
     /** Maximum degree. */
-    VertexPos maximum_degree_ = 0;
+    VertexPos highest_degree_ = 0;
 
     /** Maximum degree. */
     Weight total_weight_ = 0;
@@ -135,10 +113,75 @@ private:
      * Private methods
      */
 
+    /** Create an empty graph. */
+    inline CliqueGraph():
+        AbstractGraph(),
+        neighbors_tmp_(0) { }
+
+    friend class CliqueGraphBuilder;
+};
+
+class CliqueGraphBuilder
+{
+
+public:
+
+    /** Constructor. */
+    CliqueGraphBuilder() { };
+
+    /** Create a graph from a file. */
+    void read(
+            const std::string& instance_path,
+            const std::string& format);
+
+    /** Add a vertex. */
+    virtual VertexId add_vertex(Weight weight = 1);
+
+    /** Add a new clique. */
+    CliqueId add_clique();
+
+    /** Add a new clique. */
+    CliqueId add_clique(const std::vector<VertexId>& clique);
+
+    /** Add a vertex to a clique. */
+    void add_vertex_to_clique(
+            CliqueId clique_id,
+            VertexId vertex_id);
+
+    /** Set the weight of a vertex. */
+    void set_weight(
+            VertexId vertex_id,
+            Weight weight);
+
+    /*
+     * Build
+     */
+
+    /** Build. */
+    CliqueGraph build()
+    {
+        graph_.total_weight_ = graph_.compute_total_weight();
+        graph_.highest_degree_ = graph_.compute_highest_degree();
+        graph_.neighbors_tmp_ = optimizationtools::IndexedSet(graph_.number_of_vertices());
+        return std::move(graph_);
+    }
+
+private:
+
+    /*
+     * Private attributes
+     */
+
+    /** Graph. */
+    CliqueGraph graph_;
+
+    /*
+     * Private methods
+     */
+
     /** Read a graph in 'default' format. */
     void read_cliquegraph(std::ifstream& file);
 
 };
 
 }
-
