@@ -300,10 +300,11 @@ inline bool is_value_strictly_better(
     return false;
 }
 
+template <typename T>
 inline bool is_bound_strictly_better(
         ObjectiveDirection objective_direction,
-        double bound_cur,
-        double bound_new)
+        T bound_cur,
+        T bound_new)
 {
     switch (objective_direction) {
     case ObjectiveDirection::Minimize:
