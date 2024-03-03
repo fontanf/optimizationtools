@@ -5,7 +5,6 @@
 #include <vector>
 #include <cstdint>
 #include <functional>
-#include <iostream>
 
 namespace optimizationtools
 {
@@ -20,27 +19,66 @@ public:
     typedef int64_t Position;
     typedef std::function<Key (Index)> Function;
 
-    IndexedBinaryHeap(Index number_of_elements): heap_(1), positions_(number_of_elements + 1, -1) { }
-    IndexedBinaryHeap(Index number_of_elements, Function get_key);
-    void clear();
-    void reset(const IndexedSet& indexed_set, Function get_key);
-    virtual ~IndexedBinaryHeap() { }
+    /** Constructor. */
+    IndexedBinaryHeap(Index number_of_elements = 0): heap_(1), positions_(number_of_elements + 1, -1) { }
 
+    /** Constructor with heap initialization. */
+    IndexedBinaryHeap(Index number_of_elements, Function get_key);
+
+    /** Clear the container. */
+    void clear();
+
+    /** Reset a subset of elements. */
+    void reset(const IndexedSet& indexed_set, Function get_key);
+
+    /** Return 'true' iff the heap is empty. */
     inline bool empty() const { return heap_.size() == 1; }
+
+    /** Get the number of elements in the heap. */
     inline Position size() const { return heap_.size() - 1; }
+
+    /** Return 'true' iff the heap contains an element. */
+    inline bool contains(Index index) { return (positions_[index] != -1);}
+
+    /** Get the element at the top of the heap. */
     inline std::pair<Index, Key> top() const { return heap_[1]; }
+
+    /** Get the element at a given position of the heap array. */
     inline std::pair<Index, Key> top(Position position) const { return heap_[1 + position]; }
+
+    /** Pop the element at the top of the heap. */
     inline void pop();
+
+    /** Update the key of an element. */
     inline void update_key(Index index, Key key);
+
+    /** Get the key of an element. */
     inline Key key(Index index) { return heap_[positions_[index]].second; }
 
 private:
 
+    /*
+     * Private attributes
+     */
+
+    /** Heap array. */
     std::vector<std::pair<Index, Key>> heap_;
+
+    /**
+     * Positions of each element.
+     *
+     * -1 if not in the heap.
+     */
     std::vector<Position> positions_;
 
+    /*
+     * Private methods
+     */
+
     inline Key cost(Position element_pos) const { return heap_[element_pos].second; }
+
     inline void percolate_up(Position position);
+
     inline void percolate_down(Position position);
 
 };
