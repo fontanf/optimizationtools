@@ -23,7 +23,7 @@ public:
      */
 
     /** Constructor. */
-    inline IndexedMap(Index number_of_elements, Value null_value);
+    inline IndexedMap(Index number_of_elements = 0, Value null_value = 0);
 
     /*
      * Getters
