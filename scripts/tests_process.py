@@ -122,6 +122,7 @@ def tests_process(
     for file in extra_output_files:
         print(f"* {file}")
 
+    return ok
 
 
 if __name__ == "__main__":
@@ -139,6 +140,9 @@ if __name__ == "__main__":
             help='')
     args = parser.parse_args()
 
-    tests_process(
+    ok = tests_process(
             args.ref,
             args.new)
+
+    if not ok:
+        sys.exit("Tests failed.")
