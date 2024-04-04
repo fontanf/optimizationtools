@@ -1,6 +1,8 @@
 import argparse
 import os
 import json
+import sys
+
 
 def compare_json_elements(obj_1, obj_2, keys=None):
     if keys is None:
