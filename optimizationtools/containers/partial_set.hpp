@@ -32,7 +32,7 @@ class PartialSetFactory
 public:
 
     typedef uint64_t Index;
-    typedef uint64_t Position;
+    typedef int64_t Position;
 
     /** Constructor. */
     PartialSetFactory(
