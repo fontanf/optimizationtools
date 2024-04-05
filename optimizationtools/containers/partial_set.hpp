@@ -11,7 +11,7 @@
 namespace optimizationtools
 {
 
-using PartialSet = int64_t;
+using PartialSet = uint64_t;
 
 /**
  * A partial set is a set that stores only a given subset of elements of
@@ -35,8 +35,8 @@ class PartialSetFactory
 
 public:
 
-    typedef int64_t Index;
-    typedef int64_t Position;
+    typedef uint64_t Index;
+    typedef uint64_t Position;
 
     /** Constructor. */
     PartialSetFactory(
@@ -76,7 +76,7 @@ public:
         Position position = positions_[index];
         if (position == -1)
             return false;
-        return ((partial_set >> position) & 1UL);
+        return ((partial_set >> position) & (uint64_t)1);
     }
 
     /** Add an element to a partial set. */
@@ -87,7 +87,7 @@ public:
         Position position = positions_[index];
         if (position == -1)
             return partial_set;
-        return (partial_set | (1UL << position));
+        return (partial_set | ((uint64_t)1 << position));
     }
 
     /** Remove an element from a partial set. */
@@ -98,7 +98,7 @@ public:
         Position position = positions_[index];
         if (position == -1)
             return partial_set;
-        return (partial_set & (~(1UL << position)));
+        return (partial_set & (~((uint64_t)1 << position)));
     }
 
     /** Toggle an element of a partial set. */
@@ -109,7 +109,7 @@ public:
         Position position = positions_[index];
         if (position == -1)
             return partial_set;
-        return (partial_set ^ (1UL << position));
+        return (partial_set ^ ((uint64_t)1 << position));
     }
 
 private:
