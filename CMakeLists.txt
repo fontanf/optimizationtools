@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15.0)
 
-project(optimizationtools LANGUAGES CXX)
+project(OptimizationTools LANGUAGES CXX)
 
 # Require C++11.
 set(CMAKE_CXX_STANDARD 11)

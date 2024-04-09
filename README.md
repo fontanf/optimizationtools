@@ -8,7 +8,7 @@ cmake --build build
 
 Run unit tests:
 ```
-./build/test/optimizationtools_test
+./build/test/containers_test
 ```
 
 ## Containers
