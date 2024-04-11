@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <cmath>
+#include <functional>
 //#include <iostream>
 
 namespace optimizationtools
