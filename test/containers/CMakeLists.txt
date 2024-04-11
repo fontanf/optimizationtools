@@ -1,7 +1,7 @@
-add_executable(optimizationtools_containers_test)
-target_sources(optimizationtools_containers_test PRIVATE
+add_executable(OptimizationTools_containers_test)
+target_sources(OptimizationTools_containers_test PRIVATE
     space_efficient_array_test.cpp)
-target_link_libraries(optimizationtools_containers_test
-    optimizationtools_containers
+target_link_libraries(OptimizationTools_containers_test
+    OptimizationTools_containers
     GTest::gtest_main)
-gtest_discover_tests(optimizationtools_containers_test)
+gtest_discover_tests(OptimizationTools_containers_test)

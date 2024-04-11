@@ -1,7 +1,7 @@
-add_library(optimizationtools_graph)
-target_sources(optimizationtools_graph PRIVATE
+add_library(OptimizationTools_graph)
+target_sources(OptimizationTools_graph PRIVATE
     adjacency_list_graph.cpp
     clique_graph.cpp)
-target_include_directories(optimizationtools_graph PUBLIC
+target_include_directories(OptimizationTools_graph PUBLIC
     ${PROJECT_SOURCE_DIR}/include)
-add_library(OptimizationTools::graph ALIAS optimizationtools_graph)
+add_library(OptimizationTools::graph ALIAS OptimizationTools_graph)

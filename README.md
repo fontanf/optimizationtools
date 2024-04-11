@@ -1,13 +1,13 @@
 # OptimizationTools
 
 Compile:
-```
-cmake -S . -B build
-cmake --build build
+```shell
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
 ```
 
 Run unit tests:
-```
+```shell
 ./build/test/containers_test
 ```
 
