@@ -3,7 +3,7 @@
 Compile:
 ```shell
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
+cmake --build build --config Release --parallel
 ```
 
 Run unit tests:
