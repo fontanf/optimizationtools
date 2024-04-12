@@ -101,7 +101,7 @@ public:
         for (VertexId vertex_id = 0;
                 vertex_id < number_of_vertices();
                 ++vertex_id) {
-            highest_degree = std::max(
+            highest_degree = (std::max)(
                     highest_degree,
                     degree(vertex_id));
         }
