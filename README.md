@@ -1,5 +1,16 @@
 # OptimizationTools
 
+Compile:
+```shell
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel
+```
+
+Run unit tests:
+```shell
+./build/test/containers_test
+```
+
 ## Containers
 
 ### IndexedBinaryHeap
