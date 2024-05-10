@@ -4,7 +4,7 @@
 
 #define FFOT_COMMA ,
 
-#ifdef NDEBUG
+#ifdef FFOT_ENABLE_LOGGING
 
 #define FFOT_DBG(x)
 #define FFOT_LOG(logger, message) {  }
@@ -25,7 +25,7 @@
 #define FFOT_LOG_FOLD_START(logger, message) \
     { \
         if (logger->enabled()) { \
-            logger->os() << message; \
+            logger->os() << "{{{ " << message; \
         } \
     }
 #define FFOT_LOG_FOLD_END(logger, message) \
