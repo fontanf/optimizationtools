@@ -13,7 +13,6 @@
 
 #include <string>
 #include <iostream>
-#include <fstream>
 
 namespace optimizationtools
 {
@@ -81,4 +80,3 @@ struct Parameters
 };
 
 }
-
