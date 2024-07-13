@@ -22,12 +22,12 @@ def compare_json_elements(obj_1, obj_2, keys=None):
         for k in set(list(obj_1.keys()) + list(obj_2.keys())):
             if k not in obj_1.keys():
                 print(keys)
-                print("Missing key \"" + k + "\" in first object.")
+                print(f"Missing key \"{k}\" in first object.")
                 ok = False
                 continue
             if k not in obj_2.keys():
                 print(keys)
-                print("Missing key \"" + k + "\" in second object.")
+                print(f"Missing key \"{k}\" in second object.")
                 ok = False
                 continue
             if not compare_json_elements(obj_1[k], obj_2[k], keys + [k]):
@@ -35,6 +35,12 @@ def compare_json_elements(obj_1, obj_2, keys=None):
         return ok
     elif isinstance(obj_1, list):
         ok = True
+        if len(obj_1) != len(obj_2):
+            print(keys)
+            print(f"length 1: {len(obj_1)}")
+            print(f"length 2: {len(obj_2)}")
+            ok = False
+            return ok
         for i in range(len(obj_1)):
             if not compare_json_elements(obj_1[i], obj_2[i], keys + [i]):
                 ok = False
