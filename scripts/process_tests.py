@@ -19,10 +19,18 @@ def compare_json_elements(obj_1, obj_2, keys=None):
         return False
     elif isinstance(obj_1, dict):
         ok = True
-        for (k1, v1), (k2, v2) in zip(obj_1.items(), obj_2.items()):
-            if k1 != k2:
+        for k in set(list(obj_1.keys()) + list(obj_2.keys())):
+            if k not in obj_1.keys():
+                print(keys)
+                print("Missing key \"" + k + "\" in first object.")
                 ok = False
-            if not compare_json_elements(v1, v2, keys + [k1]):
+                continue
+            if k not in obj_2.keys():
+                print(keys)
+                print("Missing key \"" + k + "\" in second object.")
+                ok = False
+                continue
+            if not compare_json_elements(obj_1[k], obj_2[k], keys + [k]):
                 ok = False
         return ok
     elif isinstance(obj_1, list):
@@ -90,6 +98,7 @@ def tests_process(
 
         if not compare_json_elements(json_reader_ref, json_reader_new):
             ok = False
+        print()
 
     # Find extra files.
     extra_output_files = []
