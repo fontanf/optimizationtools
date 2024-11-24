@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <algorithm>
+#include <vector>
 
 namespace optimizationtools
 {
@@ -28,8 +29,8 @@ public:
     /** Set the time limit of the algorithm. */
     Timer& set_time_limit(double time_limit) { time_limit_ = time_limit; return *this; }
 
-    /** Set the end boolean. */
-    Timer& set_end_boolean(bool* end) { end_ = end; return *this; }
+    /** Add an end boolean. */
+    Timer& add_end_boolean(const bool* end) { end_.push_back(end); return *this; }
 
     /** Set SIGINT handler. */
     Timer& set_sigint_handler();
@@ -63,9 +64,11 @@ public:
     /** Return 'true' iff the algorithm needs to end. */
     bool needs_to_end() const
     {
+        for (const bool* end: end_)
+            if (*end)
+                return true;
         return !check_time()
-            || terminated_by_sigint()
-            || (end_ != nullptr && *end_);
+            || terminated_by_sigint();
     }
 
 private:
@@ -77,7 +80,7 @@ private:
     double time_limit_ = std::numeric_limits<double>::infinity();
 
     /** Flag that the user can set to 'true' to tell the algorithm to stop. */
-    bool* end_ = nullptr;
+    std::vector<const bool*> end_;
 
 };
 
