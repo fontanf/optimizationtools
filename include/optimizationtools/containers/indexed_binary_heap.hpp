@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdint>
 #include <functional>
+#include <cassert>
 
 namespace optimizationtools
 {
