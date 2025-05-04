@@ -25,18 +25,18 @@ private:
         void set_buffer_stdout(bool b)
         {
             if (b) {
-                buf_stdout = std::cout.rdbuf();
+                buf_stdout_ = std::cout.rdbuf();
             } else {
-                buf_stdout = nullptr;
+                buf_stdout_ = nullptr;
             }
         }
 
         void set_buffer_stderr(bool b)
         {
             if (b) {
-                buf_stderr = std::cerr.rdbuf();
+                buf_stderr_ = std::cerr.rdbuf();
             } else {
-                buf_stderr = nullptr;
+                buf_stderr_ = nullptr;
             }
         }
 
@@ -44,26 +44,23 @@ private:
                 std::ostream& file)
         {
             if (file.good()) {
-                buf_file = file.rdbuf();
+                buf_file_ = file.rdbuf();
             } else {
-                buf_file = nullptr;
+                buf_file_ = nullptr;
             }
         }
 
         virtual int overflow(int c)
         {
-            // std::for_each(bufs.begin(),bufs.end(),std::bind2nd(std::mem_fun(&std::streambuf::sputc),c));
-
-            // In C++20 we can simplify this:
-            // Thanks: @nabelekt
             for (auto& buf: bufs_)
                 buf->sputc(c);
-            if (buf_stdout != nullptr)
-                buf_stdout->sputc(c);
-            if (buf_stderr != nullptr)
-                buf_stderr->sputc(c);
-            if (buf_file != nullptr)
-                buf_file->sputc(c);
+            if (buf_stdout_ != nullptr)
+                buf_stdout_->sputc(c);
+            if (buf_stderr_ != nullptr)
+                buf_stderr_->sputc(c);
+            if (buf_file_ != nullptr) {
+                buf_file_->sputc(c);
+            }
             return c;
         }
 
@@ -71,11 +68,11 @@ private:
 
         std::vector<std::streambuf*> bufs_;
 
-        std::streambuf* buf_stdout = nullptr;
+        std::streambuf* buf_stdout_ = nullptr;
 
-        std::streambuf* buf_stderr = nullptr;
+        std::streambuf* buf_stderr_ = nullptr;
 
-        std::streambuf* buf_file = nullptr;
+        std::streambuf* buf_file_ = nullptr;
 
     };
 
