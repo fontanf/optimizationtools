@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <random>
 #include <algorithm>
+#include <stdexcept>
 
 namespace optimizationtools
 {
@@ -38,9 +39,6 @@ public:
 
     /** Constructor. */
     inline IndexedSet(Index number_of_elements);
-
-    /** Add a new possible element to the set. */
-    inline void add_element();
 
     /*
      * Getters
@@ -80,7 +78,7 @@ public:
     inline std::vector<Index>::const_iterator out_begin() const { return elements_.begin() + number_of_elements_; }
 
     /** Get the end iterator for elements outside the set. */
-    inline std::vector<Index>::const_iterator out_end() const { return elements_.end(); }
+    inline std::vector<Index>::const_iterator out_end() const { return elements_.begin() + size_; }
 
     /*
      * Setters
@@ -96,7 +94,10 @@ public:
     inline void clear() { number_of_elements_ = 0; }
 
     /** Add all elements to the set. */
-    inline void fill() { number_of_elements_ = elements_.size(); }
+    inline void fill() { number_of_elements_ = size_; }
+
+    /** Resize the set. */
+    inline void resize_and_clear(Position number_of_elements);
 
     /** Shuffle the elements of the set. */
     inline void shuffle(std::mt19937_64& generator);
@@ -121,6 +122,9 @@ private:
     /** List of all elements, first inside then outside the set. */
     std::vector<Index> elements_;
 
+    /** Total number of elements (in and out of the set). */
+    Position size_ = 0;
+
     /** For each element, its position in the 'elements_' vector. */
     std::vector<Position> positions_;
 
@@ -135,7 +139,8 @@ private:
 
 inline IndexedSet::IndexedSet(Index number_of_elements):
     elements_(number_of_elements),
-    positions_(number_of_elements)
+    positions_(number_of_elements),
+    size_(number_of_elements)
 {
     for (Index index = 0; index < number_of_elements; ++index) {
         elements_[index] = index;
@@ -143,15 +148,16 @@ inline IndexedSet::IndexedSet(Index number_of_elements):
     }
 }
 
-inline void IndexedSet::add_element()
-{
-    Index index = elements_.size();
-    elements_.push_back(index);
-    positions_.push_back(index);
-}
-
 inline bool IndexedSet::add(Index index)
 {
+    //if (index >= size_) {
+    //    throw std::invalid_argument(
+    //            "optimizationtools::IndexedSet::add: "
+    //            "out-of-bound index; "
+    //            "index: " + std::to_string(index) + "; "
+    //            "size_: " + std::to_string(size_) + ".");
+    //}
+
     Position position = positions_[index];
     if (position < number_of_elements_)
         return false;
@@ -165,6 +171,14 @@ inline bool IndexedSet::add(Index index)
 
 inline bool IndexedSet::remove(Index index)
 {
+    //if (index >= size_) {
+    //    throw std::invalid_argument(
+    //            "optimizationtools::IndexedSet::remove: "
+    //            "out-of-bound index; "
+    //            "index: " + std::to_string(index) + "; "
+    //            "size_: " + std::to_string(size_) + ".");
+    //}
+
     Position position = positions_[index];
     if (position >= number_of_elements_)
         return false;
@@ -174,6 +188,32 @@ inline bool IndexedSet::remove(Index index)
     positions_[elements_[number_of_elements_ - 1]] = number_of_elements_ - 1;
     number_of_elements_--;
     return true;
+}
+
+inline void IndexedSet::resize_and_clear(
+        Position number_of_elements)
+{
+    if (number_of_elements > elements_.size()) {
+        throw std::invalid_argument(
+                "optimizationtools::IndexedSet::resize_and_clear: "
+                "'number_of_elements' is too large; "
+                "number_of_elements: " + std::to_string(number_of_elements) + "; "
+                "elements_.size(): " + std::to_string(elements_.size()) + "." );
+    }
+
+    for (Index index = number_of_elements;
+            index < size_;
+            ++index) {
+        Position position = positions_[index];
+        if (position == index)
+            continue;
+        elements_[position] = elements_[index];
+        elements_[index] = index;
+        positions_[elements_[position]] = position;
+        positions_[index] = index;
+    }
+    size_ = number_of_elements;
+    clear();
 }
 
 inline void IndexedSet::shuffle_in(
@@ -208,10 +248,10 @@ inline void IndexedSet::shuffle_out(std::mt19937_64& generator)
 {
     std::shuffle(
             elements_.begin() + number_of_elements_,
-            elements_.end(),
+            elements_.begin() + size_,
             generator);
     for (Position position = number_of_elements_;
-            position < (Position)elements_.size();
+            position < size_;
             ++position) {
         positions_[elements_[position]] = position;
     }
@@ -225,10 +265,10 @@ inline void IndexedSet::shuffle(std::mt19937_64& generator)
             generator);
     std::shuffle(
             elements_.begin() + number_of_elements_,
-            elements_.end(),
+            elements_.begin() + size_,
             generator);
     for (Position position = 0;
-            position < (Position)elements_.size();
+            position < size_;
             ++position) {
         positions_[elements_[position]] = position;
     }
