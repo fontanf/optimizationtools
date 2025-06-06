@@ -167,11 +167,16 @@ template <typename Key>
 void IndexedBinaryHeap<Key>::pop()
 {
     assert(size() > 0);
-    positions_[heap_[1].first] = -1;
-    positions_[heap_.back().first] = 1;
-    heap_[1] = heap_.back();
-    heap_.pop_back();
-    percolate_down(1);
+    if (size() == 1) {
+        positions_[heap_[1].first] = -1;
+        heap_.pop_back();
+    } else {
+        positions_[heap_[1].first] = -1;
+        positions_[heap_.back().first] = 1;
+        heap_[1] = heap_.back();
+        heap_.pop_back();
+        percolate_down(1);
+    }
 }
 
 template <typename Key>
