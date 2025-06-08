@@ -5,6 +5,7 @@
 #include <random>
 #include <algorithm>
 #include <stdexcept>
+#include <string>
 
 namespace optimizationtools
 {
