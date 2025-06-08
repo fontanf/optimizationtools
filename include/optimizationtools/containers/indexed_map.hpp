@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <random>
 #include <algorithm>
+#include <stdexcept>
 
 namespace optimizationtools
 {
@@ -51,7 +52,7 @@ public:
     inline const_iterator out_begin() const { return elements_.begin() + number_of_elements_; }
 
     /** Get the end iterator for elements outside the map. */
-    inline const_iterator out_end() const { return elements_.end(); }
+    inline const_iterator out_end() const { return elements_.begin() + size_; }
 
     /*
      * Setters
@@ -62,6 +63,9 @@ public:
 
     /** Remove all elements from the map. */
     inline void clear() { number_of_elements_ = 0; };
+
+    /** Resize the map. */
+    inline void resize_and_clear(Position number_of_elements);
 
     /** Shuffle the elements of the map. */
     inline void shuffle(std::mt19937_64& generator);
@@ -86,6 +90,9 @@ private:
     /** List of all elements, first inside then outside the map. */
     std::vector<std::pair<Index, Value>> elements_;
 
+    /** Total number of elements (in and out of the set). */
+    Position size_ = 0;
+
     /** For each element, its position in the 'elements_' vector. */
     std::vector<Position> positions_;
 
@@ -104,6 +111,7 @@ private:
 template <typename Value>
 IndexedMap<Value>::IndexedMap(Index number_of_elements, Value null_value):
     elements_(number_of_elements),
+    size_(number_of_elements),
     positions_(number_of_elements),
     null_value_(null_value)
 {
@@ -136,6 +144,33 @@ inline void IndexedMap<Value>::set(Index index, Value value)
             number_of_elements_++;
         }
     }
+}
+
+template <typename Value>
+inline void IndexedMap<Value>::resize_and_clear(
+        Position number_of_elements)
+{
+    if (number_of_elements > elements_.size()) {
+        throw std::invalid_argument(
+                "optimizationtools::IndexedMap::resize_and_clear: "
+                "'number_of_elements' is too large; "
+                "number_of_elements: " + std::to_string(number_of_elements) + "; "
+                "elements_.size(): " + std::to_string(elements_.size()) + "." );
+    }
+
+    for (Index index = number_of_elements;
+            index < size_;
+            ++index) {
+        Position position = positions_[index];
+        if (position == index)
+            continue;
+        elements_[position] = elements_[index];
+        elements_[index] = {index, null_value_};
+        positions_[elements_[position].first] = position;
+        positions_[index] = index;
+    }
+    size_ = number_of_elements;
+    clear();
 }
 
 template <typename Value>
@@ -173,10 +208,10 @@ inline void IndexedMap<Value>::shuffle_out(std::mt19937_64& generator)
 {
     std::shuffle(
             elements_.begin() + number_of_elements_,
-            elements_.end(),
+            elements_.begin() + size_,
             generator);
     for (Position position = number_of_elements_;
-            position < (Position)elements_.size();
+            position < size_;
             ++position) {
         positions_[elements_[position]] = position;
     }
@@ -191,10 +226,10 @@ inline void IndexedMap<Value>::shuffle(std::mt19937_64& generator)
             generator);
     std::shuffle(
             elements_.begin() + number_of_elements_,
-            elements_.end(),
+            elements_.begin() + size_,
             generator);
     for (Position position = 0;
-            position < (Position)elements_.size();
+            position < size_;
             ++position) {
         positions_[elements_[position]] = position;
     }

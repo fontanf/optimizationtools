@@ -139,8 +139,8 @@ private:
 
 inline IndexedSet::IndexedSet(Index number_of_elements):
     elements_(number_of_elements),
-    positions_(number_of_elements),
-    size_(number_of_elements)
+    size_(number_of_elements),
+    positions_(number_of_elements)
 {
     for (Index index = 0; index < number_of_elements; ++index) {
         elements_[index] = index;
@@ -150,7 +150,7 @@ inline IndexedSet::IndexedSet(Index number_of_elements):
 
 inline bool IndexedSet::add(Index index)
 {
-    //if (index >= size_) {
+    //if (index < 0 || index >= size_) {
     //    throw std::invalid_argument(
     //            "optimizationtools::IndexedSet::add: "
     //            "out-of-bound index; "
@@ -171,7 +171,7 @@ inline bool IndexedSet::add(Index index)
 
 inline bool IndexedSet::remove(Index index)
 {
-    //if (index >= size_) {
+    //if (index < 0 || index >= size_) {
     //    throw std::invalid_argument(
     //            "optimizationtools::IndexedSet::remove: "
     //            "out-of-bound index; "
@@ -193,7 +193,7 @@ inline bool IndexedSet::remove(Index index)
 inline void IndexedSet::resize_and_clear(
         Position number_of_elements)
 {
-    if (number_of_elements > elements_.size()) {
+    if (number_of_elements < 0 || number_of_elements > elements_.size()) {
         throw std::invalid_argument(
                 "optimizationtools::IndexedSet::resize_and_clear: "
                 "'number_of_elements' is too large; "
