@@ -26,6 +26,9 @@ public:
     /** Constructor with heap initialization. */
     Indexed4aryHeap(Index number_of_elements, Function get_key);
 
+    /** Add an element. */
+    void add_element();
+
     /** Clear the container. */
     void clear();
 
@@ -87,6 +90,12 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+template <typename Key>
+void Indexed4aryHeap<Key>::add_element()
+{
+    this->positions_.push_back(-1);
+}
 
 template <typename Key>
 void Indexed4aryHeap<Key>::percolate_up(Position position)
