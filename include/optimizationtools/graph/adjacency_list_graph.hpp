@@ -78,7 +78,11 @@ public:
 
     inline VertexPos number_of_vertices() const override { return vertices_.size(); }
 
+    inline const Vertex& vertex(VertexId vertex_id) const { return vertices_[vertex_id]; }
+
     inline virtual VertexPos number_of_edges() const override { return number_of_edges_; }
+
+    inline const Edge& edge(EdgeId edge_id) const { return edges_[edge_id]; }
 
     inline VertexId degree(VertexId vertex_id) const override { return vertices_[vertex_id].edges.size(); }
 
