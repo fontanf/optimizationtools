@@ -2,7 +2,7 @@
 
 #include "optimizationtools/utils/common.hpp"
 
-#include <iostream>
+//#include <iostream>
 
 using namespace optimizationtools;
 
@@ -53,13 +53,13 @@ std::vector<uint8_t> optimizationtools::bipartite_graph_maximum_matching(
     EdgeId matching_size = 0;
     for (EdgeId edge_id = 0; edge_id < graph.number_of_edges(); ++edge_id) {
         const AdjacencyListGraph::Edge& edge = graph.edge(edge_id);
-        if (vertices_matched_edge[edge.vertex_id_1] != -1)
+        if (vertices_matched_edge[edge.vertex_1_id] != -1)
             continue;
-        if (vertices_matched_edge[edge.vertex_id_2] != -1)
+        if (vertices_matched_edge[edge.vertex_2_id] != -1)
             continue;
         edges_matched[edge_id] = 1;
-        vertices_matched_edge[edge.vertex_id_1] = edge_id;
-        vertices_matched_edge[edge.vertex_id_2] = edge_id;
+        vertices_matched_edge[edge.vertex_1_id] = edge_id;
+        vertices_matched_edge[edge.vertex_2_id] = edge_id;
         matching_size++;
     }
     //std::cout << "matching_size " << matching_size << std::endl;
@@ -133,9 +133,9 @@ std::vector<uint8_t> optimizationtools::bipartite_graph_maximum_matching(
                 EdgeId edge_id = pred[vertex_id];
                 const AdjacencyListGraph::Edge& edge = graph.edge(edge_id);
                 path.push_back(edge_id);
-                vertex_id = (edge.vertex_id_1 == vertex_id)?
-                    edge.vertex_id_2:
-                    edge.vertex_id_1;
+                vertex_id = (edge.vertex_1_id == vertex_id)?
+                    edge.vertex_2_id:
+                    edge.vertex_1_id;
                 if (vertices_processed[vertex_id]) {
                     ok = false;
                     break;
@@ -148,8 +148,8 @@ std::vector<uint8_t> optimizationtools::bipartite_graph_maximum_matching(
             //for (EdgeId edge_id: path) {
             //    const AdjacencyListGraph::Edge& edge = graph.edge(edge_id);
             //    std::cout << " " << edge_id
-            //        << "," << edge.vertex_id_1
-            //        << "," << edge.vertex_id_2;
+            //        << "," << edge.vertex_1_id
+            //        << "," << edge.vertex_2_id;
             //}
             //std::cout << std::endl;
 
@@ -160,11 +160,11 @@ std::vector<uint8_t> optimizationtools::bipartite_graph_maximum_matching(
                     edges_matched[edge_id] = 0;
                 } else {
                     edges_matched[edge_id] = 1;
-                    vertices_matched_edge[edge.vertex_id_1] = edge_id;
-                    vertices_matched_edge[edge.vertex_id_2] = edge_id;
+                    vertices_matched_edge[edge.vertex_1_id] = edge_id;
+                    vertices_matched_edge[edge.vertex_2_id] = edge_id;
                 }
-                vertices_processed[edge.vertex_id_1] = 1;
-                vertices_processed[edge.vertex_id_2] = 1;
+                vertices_processed[edge.vertex_1_id] = 1;
+                vertices_processed[edge.vertex_2_id] = 1;
             }
             matching_size++;
             if (matching_size > graph.number_of_edges()) {
@@ -205,8 +205,8 @@ std::vector<uint8_t> optimizationtools::bipartite_graph_minimum_cover(
     for (EdgeId edge_id = 0; edge_id < graph.number_of_edges(); ++edge_id) {
         if (maximum_matching[edge_id] == 1) {
             const AdjacencyListGraph::Edge& edge = graph.edge(edge_id);
-            mate[edge.vertex_id_1] = edge.vertex_id_2;
-            mate[edge.vertex_id_2] = edge.vertex_id_1;
+            mate[edge.vertex_1_id] = edge.vertex_2_id;
+            mate[edge.vertex_2_id] = edge.vertex_1_id;
         }
     }
 
@@ -253,17 +253,17 @@ std::vector<uint8_t> optimizationtools::bipartite_graph_minimum_cover(
         const AdjacencyListGraph::Edge& edge = graph.edge(edge_id);
         if (maximum_matching[edge_id] == 0)
             continue;
-        if (vertices_sides[edge.vertex_id_2] == 1) {
-            if (visited[edge.vertex_id_2]) {
-                cover[edge.vertex_id_2] = 1;
+        if (vertices_sides[edge.vertex_2_id] == 1) {
+            if (visited[edge.vertex_2_id]) {
+                cover[edge.vertex_2_id] = 1;
             } else {
-                cover[edge.vertex_id_1] = 1;
+                cover[edge.vertex_1_id] = 1;
             }
         } else {
-            if (visited[edge.vertex_id_1]) {
-                cover[edge.vertex_id_1] = 1;
+            if (visited[edge.vertex_1_id]) {
+                cover[edge.vertex_1_id] = 1;
             } else {
-                cover[edge.vertex_id_2] = 1;
+                cover[edge.vertex_2_id] = 1;
             }
         }
     }
@@ -274,8 +274,8 @@ std::vector<uint8_t> optimizationtools::bipartite_graph_minimum_cover(
             edge_id < graph.number_of_edges();
             ++edge_id) {
         const AdjacencyListGraph::Edge& edge = graph.edge(edge_id);
-        if (cover[edge.vertex_id_1] == 0
-                && cover[edge.vertex_id_2] == 0) {
+        if (cover[edge.vertex_1_id] == 0
+                && cover[edge.vertex_2_id] == 0) {
             throw std::logic_error(
                     FUNC_SIGNATURE + ": "
                     "edge " + std::to_string(edge_id) + " is not covered.");

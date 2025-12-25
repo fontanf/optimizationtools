@@ -50,10 +50,10 @@ public:
     struct Edge
     {
         /** First end of the edge. */
-        VertexId vertex_id_1;
+        VertexId vertex_1_id;
 
         /** Second end of the edge. */
-        VertexId vertex_id_2;
+        VertexId vertex_2_id;
     };
 
     /*
@@ -103,19 +103,19 @@ public:
     }
 
     /** Get the first end of an edge. */
-    inline VertexId first_end(EdgeId edge_id) const { return edges_[edge_id].vertex_id_1; }
+    inline VertexId first_end(EdgeId edge_id) const { return edges_[edge_id].vertex_1_id; }
 
     /** Get the second end of an edge.  */
-    inline VertexId second_end(EdgeId edge_id) const { return edges_[edge_id].vertex_id_2; }
+    inline VertexId second_end(EdgeId edge_id) const { return edges_[edge_id].vertex_2_id; }
 
     /** Get the other end of an edge. */
     inline VertexId other_end(
             EdgeId edge_id,
             VertexId vertex_id) const
     {
-        return (vertex_id == edges_[edge_id].vertex_id_1)?
-            edges_[edge_id].vertex_id_2:
-            edges_[edge_id].vertex_id_1;
+        return (vertex_id == edges_[edge_id].vertex_1_id)?
+            edges_[edge_id].vertex_2_id:
+            edges_[edge_id].vertex_1_id;
     }
 
     /** Get the list of edges incident to a vertex. */
@@ -196,8 +196,8 @@ public:
 
     /** Add an edge. */
     EdgeId add_edge(
-            VertexId vertex_id_1,
-            VertexId vertex_id_2);
+            VertexId vertex_1_id,
+            VertexId vertex_2_id);
 
     /** Clear graph, i.e. remove vertices and edges. */
     void clear();
