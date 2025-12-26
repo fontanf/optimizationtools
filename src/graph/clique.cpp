@@ -14,6 +14,7 @@ namespace
 inline void add_vertex_to_clique(
         const AdjacencyListGraph& graph,
         std::vector<VertexId>& clique,
+        const std::vector<uint8_t>* edges_is_forbidden,
         VertexId vertex_id,
         optimizationtools::IndexedSet& clique_candidates,
         optimizationtools::IndexedSet& edges_tmp)
@@ -21,8 +22,14 @@ inline void add_vertex_to_clique(
     const AdjacencyListGraph::Vertex& vertex = graph.vertex(vertex_id);
     clique.push_back(vertex_id);
     edges_tmp.clear();
-    for (const AdjacencyListGraph::VertexEdge& vertex_edge: vertex.edges)
-        edges_tmp.add(vertex_edge.vertex_id);
+    if (edges_is_forbidden == nullptr) {
+        for (const AdjacencyListGraph::VertexEdge& vertex_edge: vertex.edges)
+            edges_tmp.add(vertex_edge.vertex_id);
+    } else {
+        for (const AdjacencyListGraph::VertexEdge& vertex_edge: vertex.edges)
+            if ((*edges_is_forbidden)[vertex_edge.edge_id] == 0)
+                edges_tmp.add(vertex_edge.vertex_id);
+    }
     for (auto it = clique_candidates.begin(); it != clique_candidates.end();) {
         if (!edges_tmp.contains(*it)) {
             clique_candidates.remove(*it);
@@ -35,24 +42,35 @@ inline void add_vertex_to_clique(
 inline void fill_clique(
         const AdjacencyListGraph& graph,
         std::vector<VertexId>& clique,
+        const std::vector<uint8_t>* edges_is_forbidden,
         optimizationtools::IndexedSet& clique_candidates,
         optimizationtools::IndexedSet& edges_tmp)
 {
     while (!clique_candidates.empty()) {
         // Find the edges with the highest weight.
         VertexId vertex_best_id = -1;
-        Weight weight_best = 0;
+        Weight value_best = 0;
         for (VertexId vertex_id: clique_candidates) {
             const AdjacencyListGraph::Vertex& vertex = graph.vertex(vertex_id);
+            VertexId degree = 0;
+            for (const AdjacencyListGraph::VertexEdge& vertex_edge: vertex.edges)
+                if (clique_candidates.contains(vertex_edge.vertex_id))
+                    degree++;
+            //Weight value = vertex.weight;
+            //Weight value = vertex.weight * vertex.edges.size();
+            //Weight value = vertex.edges.size();
+            //Weight value = degree;
+            Weight value = vertex.weight * degree;
             if (vertex_best_id == -1
-                    || weight_best < vertex.weight) {
+                    || value_best < value) {
                 vertex_best_id = vertex_id;
-                weight_best = vertex.weight;
+                value_best = value;
             }
         }
         add_vertex_to_clique(
                 graph,
                 clique,
+                edges_is_forbidden,
                 vertex_best_id,
                 clique_candidates,
                 edges_tmp);
@@ -61,7 +79,7 @@ inline void fill_clique(
 
 }
 
-std::vector<std::vector<VertexId>> optimizationtools::clique_cover(
+std::vector<std::vector<VertexId>> optimizationtools::edge_clique_cover(
         const AdjacencyListGraph& graph)
 {
     std::vector<std::vector<VertexId>> clique_cover;
@@ -76,18 +94,21 @@ std::vector<std::vector<VertexId>> optimizationtools::clique_cover(
         add_vertex_to_clique(
                 graph,
                 clique,
+                nullptr,
                 edge.vertex_1_id,
                 clique_candidates,
                 edges_tmp);
         add_vertex_to_clique(
                 graph,
                 clique,
+                nullptr,
                 edge.vertex_2_id,
                 clique_candidates,
                 edges_tmp);
         fill_clique(
                 graph,
                 clique,
+                nullptr,
                 clique_candidates,
                 edges_tmp);
         std::sort(clique.begin(), clique.end());
@@ -103,7 +124,121 @@ std::vector<std::vector<VertexId>> optimizationtools::clique_cover(
     return clique_cover;
 }
 
-std::vector<std::vector<VertexId>> optimizationtools::clique_partition_1(
+std::vector<std::vector<VertexId>> optimizationtools::vertex_clique_cover(
+        const AdjacencyListGraph& graph)
+{
+    std::vector<std::vector<VertexId>> clique_cover;
+    optimizationtools::IndexedSet clique_candidates(graph.number_of_vertices());
+    optimizationtools::IndexedSet edges_tmp(graph.number_of_vertices());
+    for (VertexId vertex_id = 0;
+            vertex_id < graph.number_of_vertices();
+            ++vertex_id) {
+        std::vector<VertexId> clique;
+        clique_candidates.fill();
+        add_vertex_to_clique(
+                graph,
+                clique,
+                nullptr,
+                vertex_id,
+                clique_candidates,
+                edges_tmp);
+        fill_clique(
+                graph,
+                clique,
+                nullptr,
+                clique_candidates,
+                edges_tmp);
+        std::sort(clique.begin(), clique.end());
+        clique_cover.push_back(clique);
+    }
+
+    // Remove duplicates.
+    std::sort(clique_cover.begin(), clique_cover.end());
+    clique_cover.erase(
+            unique(clique_cover.begin(), clique_cover.end()),
+            clique_cover.end());
+
+    return clique_cover;
+}
+
+std::vector<std::vector<VertexId>> optimizationtools::edge_clique_partition(
+        const AdjacencyListGraph& graph)
+{
+    std::vector<std::vector<VertexId>> cliques;
+    std::vector<EdgeId> sorted_edges(graph.number_of_edges());
+    std::iota(sorted_edges.begin(), sorted_edges.end(), 0);
+    std::sort(
+            sorted_edges.begin(),
+            sorted_edges.end(),
+            [&graph](EdgeId edge_1_id, EdgeId edge_2_id) -> bool
+            {
+                const AdjacencyListGraph::Edge& edge_1 = graph.edge(edge_1_id);
+                const AdjacencyListGraph::Edge& edge_2 = graph.edge(edge_2_id);
+                const AdjacencyListGraph::Vertex& vertex_1_1 = graph.vertex(edge_1.vertex_1_id);
+                const AdjacencyListGraph::Vertex& vertex_1_2 = graph.vertex(edge_1.vertex_2_id);
+                const AdjacencyListGraph::Vertex& vertex_2_1 = graph.vertex(edge_2.vertex_1_id);
+                const AdjacencyListGraph::Vertex& vertex_2_2 = graph.vertex(edge_2.vertex_2_id);
+
+                Weight v1 = (vertex_1_1.weight + vertex_1_2.weight);
+                Weight v2 = (vertex_2_1.weight + vertex_2_2.weight);
+                //Weight v1 = (vertex_1_1.weight + vertex_1_2.weight) * (vertex_1_1.edges.size() + vertex_1_2.edges.size());
+                //Weight v2 = (vertex_2_1.weight + vertex_2_2.weight) * (vertex_2_1.edges.size() + vertex_2_2.edges.size());
+                //Weight v1 = (vertex_1_1.edges.size() + vertex_1_2.edges.size());
+                //Weight v2 = (vertex_2_1.edges.size() + vertex_2_2.edges.size());
+                return v1 > v2;
+            });
+    std::vector<uint8_t> edges_is_selected(graph.number_of_edges(), 0);
+    optimizationtools::IndexedSet clique_candidates(graph.number_of_vertices());
+    optimizationtools::IndexedSet edges_tmp(graph.number_of_vertices());
+    for (EdgeId edge_pos = 0;
+            edge_pos < graph.number_of_edges();
+            ++edge_pos) {
+        EdgeId edge_id = sorted_edges[edge_pos];
+        if (edges_is_selected[edge_id])
+            continue;
+        const AdjacencyListGraph::Edge& edge = graph.edge(edge_id);
+
+        std::vector<VertexId> clique;
+        clique_candidates.fill();
+        add_vertex_to_clique(
+                graph,
+                clique,
+                &edges_is_selected,
+                edge.vertex_1_id,
+                clique_candidates,
+                edges_tmp);
+        add_vertex_to_clique(
+                graph,
+                clique,
+                &edges_is_selected,
+                edge.vertex_2_id,
+                clique_candidates,
+                edges_tmp);
+        fill_clique(
+                graph,
+                clique,
+                &edges_is_selected,
+                clique_candidates,
+                edges_tmp);
+
+        // Update edges_is_selected.
+        clique_candidates.clear();
+        for (VertexId vertex_id: clique)
+            clique_candidates.add(vertex_id);
+        for (VertexId vertex_id: clique) {
+            const AdjacencyListGraph::Vertex& vertex = graph.vertex(vertex_id);
+            for (const AdjacencyListGraph::VertexEdge& edge: vertex.edges)
+                if (clique_candidates.contains(edge.vertex_id))
+                    edges_is_selected[edge.edge_id] = 1;
+        }
+
+        cliques.push_back(clique);
+    }
+
+    return cliques;
+}
+
+std::vector<std::vector<VertexId>> optimizationtools::vertex_clique_partition_1(
         const AdjacencyListGraph& graph)
 {
     std::vector<std::vector<VertexId>> cliques;
@@ -153,7 +288,7 @@ std::vector<std::vector<VertexId>> optimizationtools::clique_partition_1(
     return cliques;
 }
 
-std::vector<std::vector<VertexId>> optimizationtools::clique_partition_2(
+std::vector<std::vector<VertexId>> optimizationtools::vertex_clique_partition_2(
         const AdjacencyListGraph& graph)
 {
     std::vector<std::vector<VertexId>> cliques;
@@ -183,18 +318,21 @@ std::vector<std::vector<VertexId>> optimizationtools::clique_partition_2(
         add_vertex_to_clique(
                 graph,
                 clique,
+                nullptr,
                 edge.vertex_1_id,
                 clique_candidates,
                 edges_tmp);
         add_vertex_to_clique(
                 graph,
                 clique,
+                nullptr,
                 edge.vertex_2_id,
                 clique_candidates,
                 edges_tmp);
         fill_clique(
                 graph,
                 clique,
+                nullptr,
                 clique_candidates,
                 edges_tmp);
 
@@ -263,12 +401,14 @@ std::vector<std::vector<VertexId>> optimizationtools::clique_partition_2(
             add_vertex_to_clique(
                     graph,
                     clique,
+                    nullptr,
                     edge.vertex_1_id,
                     clique_candidates,
                     edges_tmp);
             add_vertex_to_clique(
                     graph,
                     clique,
+                    nullptr,
                     edge.vertex_2_id,
                     clique_candidates,
                     edges_tmp);
@@ -283,6 +423,7 @@ std::vector<std::vector<VertexId>> optimizationtools::clique_partition_2(
             fill_clique(
                     graph,
                     clique,
+                    nullptr,
                     clique_candidates,
                     edges_tmp);
 
