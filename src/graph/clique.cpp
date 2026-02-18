@@ -4,6 +4,7 @@
 #include "optimizationtools/containers/indexed_set.hpp"
 #include "optimizationtools/containers/indexed_4ary_heap.hpp"
 
+#include <numeric>
 //#include <iostream>
 
 using namespace optimizationtools;
