@@ -38,10 +38,12 @@ public:
     inline const_value_iterator values_begin() const { return values_.begin(); }
     inline const_value_iterator values_end() const { return values_.end(); }
 
-    inline void set(Index index, Value value);
+    inline DoublyIndexedMap& set(Index index, Value value);
     inline void unset(Index index) { set(index, number_of_values_); };
 
     inline bool check() const;
+
+    bool operator==(const DoublyIndexedMap& map) const;
 
 private:
 
@@ -70,7 +72,7 @@ DoublyIndexedMap::DoublyIndexedMap(Index number_of_elements, Value number_of_val
     }
 }
 
-inline void DoublyIndexedMap::set(Index index, Value value)
+inline DoublyIndexedMap& DoublyIndexedMap::set(Index index, Value value)
 {
     auto old = positions_[index];
     // Update values_.
@@ -90,7 +92,20 @@ inline void DoublyIndexedMap::set(Index index, Value value)
     positions_[index].first = value;
     positions_[index].second = elements_[value].size();
     elements_[value].push_back(index);
+    return *this;
+}
+
+inline bool DoublyIndexedMap::operator==(
+        const DoublyIndexedMap& map) const
+{
+    if (this->number_of_elements() != map.number_of_elements())
+        return false;
+    if (this->number_of_values() != map.number_of_values())
+        return false;
+    for (Index index = 0; index < this->number_of_elements(); ++index)
+        if ((*this)[index] != map[index])
+            return false;
+    return true;
 }
 
 }
-
