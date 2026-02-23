@@ -25,6 +25,7 @@ public:
 
     inline bool empty() const { return number_of_elements_ == 0; }
     inline bool contains(Index index) const { return (positions_[index].first != number_of_values_); }
+    inline Position position(Index index) const { return positions_[index].second; }
     inline Value operator[](Index index) const { return positions_[index].first; }
 
     inline Index number_of_elements() const { return number_of_elements_; }
