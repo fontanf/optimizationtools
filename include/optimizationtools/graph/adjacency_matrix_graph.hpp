@@ -110,6 +110,11 @@ public:
      * Constructors and destructor
      */
 
+    /** Create a graph from another graph type. */
+    template<typename Graph>
+    explicit AdjacencyMatrixGraph(
+            const Graph& graph);
+
     /*
      * Getters
      */
@@ -283,5 +288,28 @@ private:
     AdjacencyMatrixGraph graph_;
 
 };
+
+template <typename Graph>
+AdjacencyMatrixGraph::AdjacencyMatrixGraph(
+        const Graph& graph)
+{
+    AdjacencyMatrixGraphBuilder graph_builder;
+    for (VertexId vertex_id = 0;
+            vertex_id < graph.number_of_vertices();
+            ++vertex_id) {
+        graph_builder.add_vertex(graph.weight(vertex_id));
+    }
+    for (VertexId vertex_id = 0;
+            vertex_id < graph.number_of_vertices();
+            ++vertex_id) {
+        for (auto it = graph.neighbors_begin(vertex_id);
+                it != graph.neighbors_end(vertex_id);
+                ++it) {
+            if (vertex_id > *it)
+                graph_builder.add_edge(vertex_id, *it);
+        }
+    }
+    *this = graph_builder.build();
+}
 
 }
