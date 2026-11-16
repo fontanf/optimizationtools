@@ -1,6 +1,7 @@
 #include "optimizationtools/graph/adjacency_list_graph.hpp"
 #include "optimizationtools/graph/adjacency_matrix_graph.hpp"
 #include "optimizationtools/graph/clique_graph.hpp"
+#include "optimizationtools/graph/graph.hpp"
 
 #include <gtest/gtest.h>
 
@@ -185,4 +186,81 @@ TEST(Graph, AdjacencyMatrixGraphConcurrentIteration)
         thread.join();
     for (int thread_id = 0; thread_id < number_of_threads; ++thread_id)
         EXPECT_EQ(number_of_errors[thread_id], 0);
+}
+
+namespace
+{
+
+/** Function template called through FUNCTION_WITH_GRAPH. */
+template <typename G>
+std::vector<VertexId> get_sorted_neighbors(
+        const G& graph,
+        VertexId vertex_id)
+{
+    return sorted_neighbors(graph, vertex_id);
+}
+
+void check_wrapper(
+        const Graph& graph,
+        const std::string& type)
+{
+    EXPECT_EQ(graph.type(), type);
+    EXPECT_EQ(graph.number_of_vertices(), 5);
+    EXPECT_EQ(graph.number_of_edges(), 4);
+    EXPECT_EQ(graph.highest_degree(), 3);
+    EXPECT_EQ(graph.total_weight(), 15);
+    EXPECT_DOUBLE_EQ(graph.density(), 8.0 / 25);
+    EXPECT_DOUBLE_EQ(graph.average_degree(), 8.0 / 5);
+    EXPECT_THROW(graph.check_vertex_index(5), std::out_of_range);
+    for (VertexId vertex_id = 0; vertex_id < 5; ++vertex_id) {
+        EXPECT_EQ(graph.weight(vertex_id), weights[vertex_id]);
+        EXPECT_EQ(graph.degree(vertex_id), (VertexPos)expected_neighbors[vertex_id].size());
+        EXPECT_EQ(
+                FUNCTION_WITH_GRAPH(get_sorted_neighbors, graph, vertex_id),
+                expected_neighbors[vertex_id]);
+    }
+    check_graph(*graph.to_adjacency_list_graph());
+    check_graph(*graph.to_adjacency_matrix_graph());
+}
+
+}
+
+TEST(Graph, WrapperAdjacencyListGraph)
+{
+    auto adjacency_list_graph = std::make_shared<const AdjacencyListGraph>(build_adjacency_list_graph());
+    Graph graph(adjacency_list_graph);
+    EXPECT_EQ(graph.adjacency_list_graph(), adjacency_list_graph.get());
+    EXPECT_EQ(graph.adjacency_matrix_graph(), nullptr);
+    EXPECT_EQ(graph.clique_graph(), nullptr);
+    // No copy when the graph already has the requested type.
+    EXPECT_EQ(graph.to_adjacency_list_graph(), adjacency_list_graph);
+    check_wrapper(graph, "AdjacencyListGraph");
+}
+
+TEST(Graph, WrapperAdjacencyMatrixGraph)
+{
+    auto adjacency_matrix_graph = std::make_shared<const AdjacencyMatrixGraph>(build_adjacency_matrix_graph());
+    Graph graph(adjacency_matrix_graph);
+    EXPECT_EQ(graph.adjacency_list_graph(), nullptr);
+    EXPECT_EQ(graph.adjacency_matrix_graph(), adjacency_matrix_graph.get());
+    EXPECT_EQ(graph.to_adjacency_matrix_graph(), adjacency_matrix_graph);
+    check_wrapper(graph, "AdjacencyMatrixGraph");
+}
+
+TEST(Graph, WrapperCliqueGraph)
+{
+    auto clique_graph = std::make_shared<const CliqueGraph>(build_clique_graph());
+    Graph graph(clique_graph);
+    EXPECT_EQ(graph.clique_graph(), clique_graph.get());
+    check_wrapper(graph, "CliqueGraph");
+}
+
+TEST(Graph, WrapperNull)
+{
+    EXPECT_THROW(Graph(std::shared_ptr<const AdjacencyListGraph>(nullptr)), std::invalid_argument);
+}
+
+TEST(Graph, AdjacencyMatrixGraphFromCliqueGraph)
+{
+    check_graph(AdjacencyMatrixGraph(build_clique_graph()));
 }

@@ -22,6 +22,9 @@ namespace optimizationtools
  * - Weight total_weight() const
  * - Graph::const_iterator neighbors_begin(VertexId) const
  * - Graph::const_iterator neighbors_end(VertexId) const
+ *
+ * To store a graph of any type in a class which is not a template, such as a
+ * problem instance, use the 'Graph' class from 'graph/graph.hpp'.
  */
 
 typedef int64_t VertexId;
