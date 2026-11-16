@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <algorithm>
 #include <vector>
@@ -29,8 +30,20 @@ public:
     /** Set the time limit of the algorithm. */
     Timer& set_time_limit(double time_limit) { time_limit_ = time_limit; return *this; }
 
-    /** Add an end boolean. */
+    /**
+     * Add an end boolean.
+     *
+     * Prefer the 'std::atomic<bool>' overload when the boolean is set by
+     * another thread than the one checking 'needs_to_end': reading a plain
+     * 'bool' written concurrently by another thread is a data race.
+     */
     Timer& add_end_boolean(const bool* end) { end_.push_back(end); return *this; }
+
+    /**
+     * Add an end boolean which may be set by another thread than the one
+     * checking 'needs_to_end'.
+     */
+    Timer& add_end_boolean(const std::atomic<bool>* end) { atomic_end_.push_back(end); return *this; }
 
     /** Set SIGINT handler. */
     Timer& set_sigint_handler();
@@ -67,6 +80,11 @@ public:
         for (const bool* end: end_)
             if (*end)
                 return true;
+        // The end booleans only signal that the algorithm needs to end; they
+        // don't publish any other data, so a relaxed load is enough.
+        for (const std::atomic<bool>* end: atomic_end_)
+            if (end->load(std::memory_order_relaxed))
+                return true;
         return !check_time()
             || terminated_by_sigint();
     }
@@ -81,6 +99,12 @@ private:
 
     /** Flag that the user can set to 'true' to tell the algorithm to stop. */
     std::vector<const bool*> end_;
+
+    /**
+     * Flags that the user or other threads can set to 'true' to tell the
+     * algorithm to stop.
+     */
+    std::vector<const std::atomic<bool>*> atomic_end_;
 
 };
 
