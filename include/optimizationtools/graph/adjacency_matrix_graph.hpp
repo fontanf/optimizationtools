@@ -4,6 +4,8 @@
 
 #include <vector>
 #include <algorithm>
+#include <iterator>
+#include <cstddef>
 
 namespace optimizationtools
 {
@@ -13,8 +15,80 @@ class AdjacencyMatrixGraph
 
 public:
 
-    /** Type of the iterators returned by 'neighbors_begin' and 'neighbors_end'. */
-    typedef std::vector<VertexId>::const_iterator const_iterator;
+    /**
+     * Iterator over the neighbors of a vertex.
+     *
+     * It walks the row of the vertex in the adjacency matrix and skips the
+     * non-neighbors. It doesn't store anything in the graph, so iterating
+     * over the neighbors of several vertices at the same time, from one or
+     * several threads, is safe.
+     */
+    class const_iterator
+    {
+
+    public:
+
+        typedef std::forward_iterator_tag iterator_category;
+        typedef VertexId value_type;
+        typedef std::ptrdiff_t difference_type;
+        typedef const VertexId* pointer;
+        typedef const VertexId& reference;
+
+        /** Constructor. */
+        const_iterator(
+                const AdjacencyMatrixGraph* graph,
+                VertexId vertex_id,
+                VertexId neighbor_id):
+            graph_(graph),
+            vertex_id_(vertex_id),
+            neighbor_id_(neighbor_id)
+        {
+            skip_non_neighbors();
+        }
+
+        inline reference operator*() const { return neighbor_id_; }
+
+        inline pointer operator->() const { return &neighbor_id_; }
+
+        inline const_iterator& operator++()
+        {
+            ++neighbor_id_;
+            skip_non_neighbors();
+            return *this;
+        }
+
+        inline const_iterator operator++(int)
+        {
+            const_iterator it = *this;
+            ++(*this);
+            return it;
+        }
+
+        inline bool operator==(const const_iterator& it) const { return neighbor_id_ == it.neighbor_id_; }
+
+        inline bool operator!=(const const_iterator& it) const { return neighbor_id_ != it.neighbor_id_; }
+
+    private:
+
+        /** Move to the next neighbor, or to the end. */
+        inline void skip_non_neighbors()
+        {
+            while (neighbor_id_ < graph_->number_of_vertices()
+                    && !graph_->has_edge(vertex_id_, neighbor_id_)) {
+                ++neighbor_id_;
+            }
+        }
+
+        /** Graph. */
+        const AdjacencyMatrixGraph* graph_;
+
+        /** Vertex whose neighbors are iterated over. */
+        VertexId vertex_id_;
+
+        /** Current neighbor; 'number_of_vertices()' for the end iterator. */
+        VertexId neighbor_id_;
+
+    };
 
     /*
      * Structures
@@ -64,21 +138,18 @@ public:
     /**
      * Get an iterator pointing to the first neighbor of a vertex.
      *
-     * The neighbors are computed on the fly and stored in a buffer. Therefore,
-     * the iterators of a vertex are invalidated as soon as the neighbors of
-     * another vertex are requested, and this method is not thread-safe.
+     * Iterating over all the neighbors of a vertex takes
+     * O(number_of_vertices()).
      */
     inline const_iterator neighbors_begin(VertexId vertex_id) const
     {
-        compute_neighbors(vertex_id);
-        return neighbors_tmp_.begin();
+        return const_iterator(this, vertex_id, 0);
     }
 
     /** Get an iterator pointing past the last neighbor of a vertex. */
     inline const_iterator neighbors_end(VertexId vertex_id) const
     {
-        compute_neighbors(vertex_id);
-        return neighbors_tmp_.end();
+        return const_iterator(this, vertex_id, number_of_vertices());
     }
 
     /**
@@ -102,18 +173,6 @@ private:
     /** Constructor. */
     inline AdjacencyMatrixGraph() { }
 
-    /** Fill 'neighbors_tmp_' with the neighbors of a vertex. */
-    inline void compute_neighbors(VertexId vertex_id) const
-    {
-        if (vertex_id == vertex_id_tmp_)
-            return;
-        neighbors_tmp_.clear();
-        for (VertexId vertex_id_2 = 0; vertex_id_2 < number_of_vertices(); ++vertex_id_2)
-            if (has_edge(vertex_id, vertex_id_2))
-                neighbors_tmp_.push_back(vertex_id_2);
-        vertex_id_tmp_ = vertex_id;
-    }
-
     /*
      * Private attributes
      */
@@ -132,12 +191,6 @@ private:
 
     /** Maximum degree. */
     Weight total_weight_ = 0;
-
-    /** Buffer filled by the 'compute_neighbors' method. */
-    mutable std::vector<VertexId> neighbors_tmp_;
-
-    /** Vertex whose neighbors are currently stored in 'neighbors_tmp_'. */
-    mutable VertexId vertex_id_tmp_ = -1;
 
     friend class AdjacencyMatrixGraphBuilder;
 };
@@ -217,7 +270,6 @@ public:
                     this->graph_.highest_degree_,
                     this->graph_.degree(vertex_id));
         }
-        graph_.vertex_id_tmp_ = -1;
         return std::move(graph_);
     }
 
