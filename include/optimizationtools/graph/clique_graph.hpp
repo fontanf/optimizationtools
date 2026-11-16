@@ -1,21 +1,25 @@
 #pragma once
 
-#include "optimizationtools/graph/abstract_graph.hpp"
+#include "optimizationtools/graph/common.hpp"
 
 #include "optimizationtools/containers/indexed_set.hpp"
 
-#include <cstdint>
 #include <vector>
+#include <string>
+#include <algorithm>
 
 namespace optimizationtools
 {
 
 typedef int64_t CliqueId;
 
-class CliqueGraph: public AbstractGraph
+class CliqueGraph
 {
 
 public:
+
+    /** Type of the iterators returned by 'neighbors_begin' and 'neighbors_end'. */
+    typedef std::vector<VertexId>::const_iterator const_iterator;
 
     /*
      * Structures
@@ -40,45 +44,48 @@ public:
      * Constructors and destructor
      */
 
-    /** Destructor. */
-    inline virtual ~CliqueGraph() { }
-
-    virtual CliqueGraph* clone() const override
-    {
-        return new CliqueGraph(*this);
-    }
-
     /*
      * Getters
      */
 
-    inline VertexPos number_of_vertices() const override { return vertices_.size(); }
+    inline VertexPos number_of_vertices() const { return vertices_.size(); }
 
-    inline EdgeId number_of_edges() const override { return number_of_edges_; }
+    inline EdgeId number_of_edges() const { return number_of_edges_; }
 
-    inline VertexId degree(VertexId vertex_id) const override { return vertices_[vertex_id].degree; }
+    inline VertexId degree(VertexId vertex_id) const { return vertices_[vertex_id].degree; }
 
-    virtual VertexPos highest_degree() const override { return highest_degree_; }
+    VertexPos highest_degree() const { return highest_degree_; }
 
-    inline Weight weight(VertexId vertex_id) const override { return vertices_[vertex_id].weight; }
+    inline Weight weight(VertexId vertex_id) const { return vertices_[vertex_id].weight; }
 
-    virtual Weight total_weight() const override { return total_weight_; };
+    Weight total_weight() const { return total_weight_; };
 
-    virtual const_iterator neighbors_begin(VertexId vertex_id) const override
+    /** Get the density of the graph. */
+    inline double density() const { return optimizationtools::density(*this); }
+
+    /** Get the average degree of the graph. */
+    inline double average_degree() const { return optimizationtools::average_degree(*this); }
+
+    /** Check if vertex index 'vertex_id' is within the correct range. */
+    inline void check_vertex_index(VertexId vertex_id) const { optimizationtools::check_vertex_index(*this, vertex_id); }
+
+    /**
+     * Get an iterator pointing to the first neighbor of a vertex.
+     *
+     * The neighbors are computed on the fly and stored in a buffer. Therefore,
+     * the iterators of a vertex are invalidated as soon as the neighbors of
+     * another vertex are requested, and this method is not thread-safe.
+     */
+    inline const_iterator neighbors_begin(VertexId vertex_id) const
     {
-        if (vertex_id != vertex_id_tmp_) {
-            neighbors_tmp_.clear();
-            for (CliqueId clique_id: vertices_[vertex_id].cliques)
-                for (VertexId vertex_id_2: cliques_[clique_id])
-                    if (vertex_id_2 != vertex_id)
-                        neighbors_tmp_.add(vertex_id_2);
-            vertex_id_tmp_ = vertex_id;
-        }
+        compute_neighbors(vertex_id);
         return neighbors_tmp_.begin();
     }
 
-    inline virtual const_iterator neighbors_end(VertexId) const override
+    /** Get an iterator pointing past the last neighbor of a vertex. */
+    inline const_iterator neighbors_end(VertexId vertex_id) const
     {
+        compute_neighbors(vertex_id);
         return neighbors_tmp_.end();
     }
 
@@ -106,7 +113,7 @@ private:
     /** Vector filled and returned by the 'adjacency_list' method. */
     mutable IndexedSet neighbors_tmp_;
 
-    /** Last vertex for which method 'neighbors_begin' has been called. */
+    /** Vertex whose neighbors are currently stored in 'neighbors_tmp_'. */
     mutable VertexId vertex_id_tmp_ = -1;
 
     /*
@@ -115,8 +122,20 @@ private:
 
     /** Create an empty graph. */
     inline CliqueGraph():
-        AbstractGraph(),
         neighbors_tmp_(0) { }
+
+    /** Fill 'neighbors_tmp_' with the neighbors of a vertex. */
+    inline void compute_neighbors(VertexId vertex_id) const
+    {
+        if (vertex_id == vertex_id_tmp_)
+            return;
+        neighbors_tmp_.clear();
+        for (CliqueId clique_id: vertices_[vertex_id].cliques)
+            for (VertexId vertex_id_2: cliques_[clique_id])
+                if (vertex_id_2 != vertex_id)
+                    neighbors_tmp_.add(vertex_id_2);
+        vertex_id_tmp_ = vertex_id;
+    }
 
     friend class CliqueGraphBuilder;
 };
@@ -135,7 +154,7 @@ public:
             const std::string& format);
 
     /** Add a vertex. */
-    virtual VertexId add_vertex(Weight weight = 1);
+    VertexId add_vertex(Weight weight = 1);
 
     /** Add a new clique. */
     CliqueId add_clique();
@@ -160,9 +179,16 @@ public:
     /** Build. */
     CliqueGraph build()
     {
-        graph_.total_weight_ = graph_.compute_total_weight();
-        graph_.highest_degree_ = graph_.compute_highest_degree();
+        for (VertexId vertex_id = 0;
+                vertex_id < this->graph_.number_of_vertices();
+                ++vertex_id) {
+            this->graph_.total_weight_ += this->graph_.weight(vertex_id);
+            this->graph_.highest_degree_ = (std::max)(
+                    this->graph_.highest_degree_,
+                    this->graph_.degree(vertex_id));
+        }
         graph_.neighbors_tmp_ = optimizationtools::IndexedSet(graph_.number_of_vertices());
+        graph_.vertex_id_tmp_ = -1;
         return std::move(graph_);
     }
 

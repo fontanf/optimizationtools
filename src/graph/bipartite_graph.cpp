@@ -2,6 +2,7 @@
 
 #include "optimizationtools/utils/common.hpp"
 
+#include <stdexcept>
 //#include <iostream>
 
 using namespace optimizationtools;
