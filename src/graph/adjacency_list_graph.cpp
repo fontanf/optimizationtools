@@ -161,28 +161,6 @@ AdjacencyListGraph AdjacencyListGraph::complementary() const
     return graph_builder.build();
 }
 
-AdjacencyListGraph::AdjacencyListGraph(
-        const AbstractGraph& abstract_graph)
-{
-    AdjacencyListGraphBuilder graph_builder;
-    for (VertexId vertex_id = 0;
-            vertex_id < abstract_graph.number_of_vertices();
-            ++vertex_id) {
-        graph_builder.add_vertex();
-    }
-    for (VertexId vertex_id = 0;
-            vertex_id < abstract_graph.number_of_vertices();
-            ++vertex_id) {
-        for (auto it = abstract_graph.neighbors_begin(vertex_id);
-                it != abstract_graph.neighbors_end(vertex_id);
-                ++it) {
-            if (vertex_id > *it)
-                graph_builder.add_edge(vertex_id, *it);
-        }
-    }
-    *this = graph_builder.build();
-}
-
 void AdjacencyListGraphBuilder::read_dimacs1992(std::ifstream& file)
 {
     std::string tmp;
@@ -367,7 +345,13 @@ void AdjacencyListGraph::write_dimacs(std::ofstream& file) const
 
 AdjacencyListGraph AdjacencyListGraphBuilder::build()
 {
-    graph_.total_weight_ = graph_.compute_total_weight();
-    graph_.highest_degree_ = graph_.compute_highest_degree();
+    for (VertexId vertex_id = 0;
+            vertex_id < this->graph_.number_of_vertices();
+            ++vertex_id) {
+        this->graph_.total_weight_ += this->graph_.weight(vertex_id);
+        this->graph_.highest_degree_ = (std::max)(
+                this->graph_.highest_degree_,
+                this->graph_.degree(vertex_id));
+    }
     return std::move(graph_);
 }

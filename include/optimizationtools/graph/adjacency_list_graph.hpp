@@ -1,14 +1,20 @@
 #pragma once
 
-#include "optimizationtools/graph/abstract_graph.hpp"
+#include "optimizationtools/graph/common.hpp"
+
+#include <vector>
+#include <string>
 
 namespace optimizationtools
 {
 
-class AdjacencyListGraph: public AbstractGraph
+class AdjacencyListGraph
 {
 
 public:
+
+    /** Type of the iterators returned by 'neighbors_begin' and 'neighbors_end'. */
+    typedef std::vector<VertexId>::const_iterator const_iterator;
 
     /*
      * Structures
@@ -60,44 +66,49 @@ public:
      * Constructors destructor
      */
 
-    /** Create a graph from an AbstractGraph. */
-    inline AdjacencyListGraph(
-            const AbstractGraph& abstract_graph);
+    /** Create a graph from another graph type. */
+    template<typename Graph>
+    explicit AdjacencyListGraph(
+            const Graph& graph);
 
     /** Create the complementary of a graph. */
     AdjacencyListGraph complementary() const;
-
-    virtual AdjacencyListGraph* clone() const override
-    {
-        return new AdjacencyListGraph(*this);
-    }
 
     /*
      * Getters
      */
 
-    inline VertexPos number_of_vertices() const override { return vertices_.size(); }
+    inline VertexPos number_of_vertices() const { return vertices_.size(); }
 
     inline const Vertex& vertex(VertexId vertex_id) const { return vertices_[vertex_id]; }
 
-    inline virtual VertexPos number_of_edges() const override { return number_of_edges_; }
+    inline VertexPos number_of_edges() const { return number_of_edges_; }
 
     inline const Edge& edge(EdgeId edge_id) const { return edges_[edge_id]; }
 
-    inline VertexId degree(VertexId vertex_id) const override { return vertices_[vertex_id].edges.size(); }
+    inline VertexId degree(VertexId vertex_id) const { return vertices_[vertex_id].edges.size(); }
 
-    inline virtual VertexPos highest_degree() const override { return highest_degree_; }
+    inline VertexPos highest_degree() const { return highest_degree_; }
 
-    inline Weight weight(VertexId vertex_id) const override { return vertices_[vertex_id].weight; }
+    inline Weight weight(VertexId vertex_id) const { return vertices_[vertex_id].weight; }
 
-    virtual Weight total_weight() const override { return total_weight_; };
+    Weight total_weight() const { return total_weight_; };
 
-    const_iterator neighbors_begin(VertexId vertex_id) const override
+    /** Get the density of the graph. */
+    inline double density() const { return optimizationtools::density(*this); }
+
+    /** Get the average degree of the graph. */
+    inline double average_degree() const { return optimizationtools::average_degree(*this); }
+
+    /** Check if vertex index 'vertex_id' is within the correct range. */
+    inline void check_vertex_index(VertexId vertex_id) const { optimizationtools::check_vertex_index(*this, vertex_id); }
+
+    const_iterator neighbors_begin(VertexId vertex_id) const
     {
         return vertices_[vertex_id].neighbors.begin();
     }
 
-    const_iterator neighbors_end(VertexId vertex_id) const override
+    const_iterator neighbors_end(VertexId vertex_id) const
     {
         return vertices_[vertex_id].neighbors.end();
     }
@@ -184,7 +195,7 @@ public:
             const std::string& format);
 
     /** Add a vertex. */
-    virtual VertexId add_vertex(Weight weight = 1);
+    VertexId add_vertex(Weight weight = 1);
 
     /** Set the weight of a vertex. */
     void set_weight(
@@ -247,5 +258,28 @@ private:
     void read_snap(std::ifstream& file);
 
 };
+
+template <typename Graph>
+AdjacencyListGraph::AdjacencyListGraph(
+        const Graph& graph)
+{
+    AdjacencyListGraphBuilder graph_builder;
+    for (VertexId vertex_id = 0;
+            vertex_id < graph.number_of_vertices();
+            ++vertex_id) {
+        graph_builder.add_vertex(graph.weight(vertex_id));
+    }
+    for (VertexId vertex_id = 0;
+            vertex_id < graph.number_of_vertices();
+            ++vertex_id) {
+        for (auto it = graph.neighbors_begin(vertex_id);
+                it != graph.neighbors_end(vertex_id);
+                ++it) {
+            if (vertex_id > *it)
+                graph_builder.add_edge(vertex_id, *it);
+        }
+    }
+    *this = graph_builder.build();
+}
 
 }
